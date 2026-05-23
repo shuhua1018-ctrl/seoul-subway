@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首爾地鐵站名即時查詢工具 (Excel版)</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            text-align: center;
+            color: #1e293b;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .upload-section {
+            border: 2px dashed #cbd5e1;
+            padding: 20px;
+            text-align: center;
+            border-radius: 12px;
+            background: #f8fafc;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-section:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .upload-section input {
+            display: none;
+        }
+        .search-area {
+            display: none; /* 預設隱藏，上傳 Excel 後才顯示 */
+        }
+        .search-box {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .search-box:focus {
+            border-color: #3b82f6;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #64748b;
+            margin: 12px 0;
+            padding: 0 4px;
+        }
+        .station-list {
+            max-height: 450px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .station-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .station-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+        .station-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .zh-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .en-name {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .meta-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .line-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            background: #e2e8f0;
+            color: #475569;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .ko-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e40af;
+            background: #eff6ff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+        }
+        .no-result {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px;
+            font-size: 15px;
+        }
+        .file-info {
+            color: #10b981;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🇰🇷 首爾地鐵即時查詢系統</h1>
+    <div class="subtitle">輸入中文或英文，秒查對應韓文站點</div>
+    
+    <div class="upload-section" onclick="document.getElementById('excelFile').click()">
+        <span id="uploadText">📁 點擊此處或拖曳你的地鐵 Excel 檔案到這裡</span>
+        <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
+    </div>
+    
+    <div class="search-area" id="searchArea">
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 輸入中文或英文站名搜尋... (例如：明洞 或 Myeong)" oninput="filterStations()">
+        
+        <div class="status-bar">
+            <div id="fileStatus"></div>
+            <div id="resultCount">共 0 個站點</div>
+        </div>
+
+        <div class="station-list" id="stationList"></div>
+    </div>
+</div>
+
+<script>
+    let subwayData = []; // 用來存放從 Excel 解析出來的資料
+
+    // 處理上傳的 Excel 檔案
+    function handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        document.getElementById('uploadText').innerText = "⏳ 正在解析 Excel 檔案，請稍候...";
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            
+            // 預設讀取第一個工作表 (Sheet)
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // 將工作表轉換為 JSON 陣列
+            // raw: false 會將所有內容轉為字串，方便搜尋
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+            
+            if(jsonData.length === 0) {
+                alert("Excel 檔案裡似乎沒有資料？");
+                document.getElementById('uploadText').innerText = "❌ 讀取失敗，請重新選擇檔案";
+                return;
+            }
+
+            // 自動識別 Excel 的欄位名稱
+            // 為了保持最大彈性，我們把每一列的所有內容轉成一個好搜尋的結構
+            subwayData = jsonData.map(row => {
+                // 這裡會抓取每一列的值，轉成小寫方便後續比對
+                // 同時我們通融多種常見的 Excel 欄位名稱
+                return {
+                    zh: row['中文'] || row['中文站名'] || row['站名'] || Object.values(row)[0] || '',
+                    en: row['英文'] || row['英文站名'] || row['English'] || Object.values(row)[1] || '',
+                    ko: row['韓文'] || row['韓文站名'] || row['Korean'] || Object.values(row)[2] || '',
+                    line: row['線路'] || row['地鐵線路'] || row['號線'] || row['Line'] || ''
+                };
+            });
+
+            // 介面切換與更新
+            document.getElementById('uploadText').innerHTML = `✅ 已成功載入：<span class="file-info">${file.name}</span>`;
+            document.getElementById('fileStatus').innerText = `Excel 欄位偵測成功`;
+            document.getElementById('searchArea').style.display = 'block';
+            
+            // 首次渲染全部資料
+            renderStations(subwayData);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // 渲染資料到畫面上
+    function renderStations(data) {
+        const listContainer = document.getElementById('stationList');
+        const countContainer = document.getElementById('resultCount');
+        listContainer.innerHTML = '';
+        
+        countContainer.innerText = `找到 ${data.length} 個站點`;
+
+        if (data.length === 0) {
+            listContainer.innerHTML = '<div class="no-result">沒有找到符合條件的站點 🔍</div>';
+            return;
+        }
+
+        data.forEach(station => {
+            const card = document.createElement('div');
+            card.className = 'station-card';
+            
+            // 如果 Excel 裡面有線路資訊，就顯示 Badge
+            const lineBadgeHtml = station.line ? `<span class="line-badge">${station.line}</span>` : '';
+
+            card.innerHTML = `
+                <div class="station-info">
+                    <div class="meta-info">
+                        <span class="zh-name">${station.zh}</span>
+                        ${lineBadgeHtml}
+                    </div>
+                    <div class="en-name">${station.en}</div>
+                </div>
+                <div class="ko-name">${station.ko}</div>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    // 搜尋過濾功能
+    function filterStations() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        
+        const filtered = subwayData.filter(station => {
+            return station.zh.toLowerCase().includes(query) || 
+                   station.en.toLowerCase().includes(query);
+        });
+        
+        renderStations(filtered);
+    }
+
+    // 支援拖曳檔案上傳
+    const dropZone = document.querySelector('.upload-section');
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if(files.length > 0) {
+            document.getElementById('excelFile').files = files;
+            handleFile({ target: { files: files } });
+        }
+    });
+</script>
+
+</body>
+</html>
