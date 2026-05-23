@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>韓國地鐵即時查詢系統 (首爾/釜山雙城版)</title>
+    <title>韓國地鐵即時查詢系統 (智慧轉乘雙城版)</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -34,8 +34,6 @@
             font-size: 14px;
             margin-bottom: 20px;
         }
-        
-        /* 城市切換標籤樣式 */
         .city-tabs {
             display: flex;
             gap: 10px;
@@ -60,7 +58,6 @@
             color: white;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
-
         .search-box {
             width: 100%;
             padding: 14px;
@@ -108,9 +105,10 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            width: 65%;
         }
         .zh-name {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 600;
             color: #0f172a;
         }
@@ -122,6 +120,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .line-badge {
             font-size: 11px;
@@ -132,7 +131,22 @@
             font-weight: 500;
         }
         
-        /* 地鐵線路配色（相容首爾與釜山） */
+        /* 轉乘區塊樣式 */
+        .transfer-section {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #64748b;
+            flex-wrap: wrap;
+        }
+        .transfer-title {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        /* 地鐵線路經典配色 */
         .line-1號線 { background: #003da5; color: white; }
         .line-2號線 { background: #37b42d; color: white; }
         .line-3號線 { background: #fa5b00; color: white; }
@@ -154,7 +168,8 @@
             border-radius: 8px;
             letter-spacing: 0.5px;
             text-align: right;
-            min-width: 100px;
+            width: 30%;
+            box-sizing: border-box;
         }
         .no-result {
             text-align: center;
@@ -168,7 +183,7 @@
 
 <div class="container">
     <h1>🇰🇷 韓國地鐵即時查詢系統</h1>
-    <div class="subtitle">切換城市，免上傳直接秒查對照站名</div>
+    <div class="subtitle">自動計算轉乘線路 · 首爾/釜山免上傳雙城隨身版</div>
     
     <!-- 城市選擇分頁標籤 -->
     <div class="city-tabs">
@@ -189,7 +204,7 @@
 </div>
 
 <script>
-    // 1. 首爾地鐵資料庫
+    // 1. 首爾地鐵原始資料 (不需手動寫轉乘)
     const seoulData = [
         {"zh":"延川","en":"Yeoncheon","ko":"연천","line":"1號線"},
         {"zh":"全谷","en":"Jeongok","ko":"전곡","line":"1號線"},
@@ -266,7 +281,7 @@
         {"zh":"金井","en":"Geumjong","ko":"금정","line":"1號線"},
         {"zh":"軍浦","en":"Gunpo","ko":"군포","line":"1號線"},
         {"zh":"堂井","en":"Dangjeong","ko":"당정","line":"1號線"},
-        {"zh":"義王","en":"Uiwang","ko":"의wang","line":"1號線"},
+        {"zh":"義王","en":"Uiwang","ko":"의왕","line":"1號線"},
         {"zh":"成均館大","en":"Sungkyunkwan Univ.","ko":"성균관대","line":"1號線"},
         {"zh":"華西","en":"Hwaseo","ko":"화서","line":"1號線"},
         {"zh":"水原","en":"Suwon","ko":"수원","line":"1號線"},
@@ -337,6 +352,7 @@
         {"zh":"龍踏","en":"Yongdap","ko":"용답","line":"2號線"},
         {"zh":"新踏","en":"Sindap","ko":"신답","line":"2號線"},
         {"zh":"龍頭","en":"Yongdu","ko":"용두","line":"2號線"},
+        {"zh":"新設洞","en":"Sinseol-dong","ko":"신설동","line":"2號線"},
         {"zh":"道林川","en":"Dorimcheon","ko":"도림천","line":"2號線"},
         {"zh":"陽川區廳","en":"Yangcheon-gu Office","ko":"양천구청","line":"2號線"},
         {"zh":"新亭四岔路","en":"Sinjeongnegeori","ko":"신정네거리","line":"2號線"},
@@ -361,7 +377,6 @@
         {"zh":"獨立門","en":"Dongnimmun","ko":"독립문","line":"3號線"},
         {"zh":"景福宮","en":"Gyeongbokgung","ko":"경복궁","line":"3號線"},
         {"zh":"安國","en":"Anguk","ko":"안국","line":"3號線"},
-        {"zh":"忠武路","en":"Chungmuro","ko":"충무로","line":"3號線"},
         {"zh":"東大入口","en":"Dongguk Univ.","ko":"동대입구","line":"3號線"},
         {"zh":"藥水","en":"Yaksu","ko":"약수","line":"3號線"},
         {"zh":"玉水","en":"Oksu","ko":"옥수","line":"3號線"},
@@ -381,10 +396,162 @@
         {"zh":"可樂市場","en":"Garak Market","ko":"가락시장","line":"3號線"},
         {"zh":"警察病院","en":"Police Hospital","ko":"경찰병원","line":"3號線"},
         {"zh":"梧琴","en":"Ogeum","ko":"오금","line":"3號線"},
-        {"zh":"明洞","en":"Myeong-dong","ko":"명동","line":"4號線"}
+        {"zh":"檀村","en":"Danggogae","ko":"당고개","line":"4號線"},
+        {"zh":"上溪","en":"Sanggye","ko":"상계","line":"4號線"},
+        {"zh":"蘆原","en":"Nowon","ko":"노원","line":"4號線"},
+        {"zh":"雙門","en":"Ssangmun","ko":"쌍문","line":"4號線"},
+        {"zh":"水踰","en":"Suyu","ko":"수유","line":"4號線"},
+        {"zh":"彌阿","en":"Mia","ko":"미아","line":"4號線"},
+        {"zh":"彌阿沙十字路口","en":"Miasageori","ko":"미아사거리","line":"4號線"},
+        {"zh":"吉音","en":"Gireum","ko":"길음","line":"4號線"},
+        {"zh":"誠信女大入口","en":"Sungshin Women's Univ.","ko":"성신여대입구","line":"4號線"},
+        {"zh":"漢城大入口","en":"Hansung Univ.","ko":"한성대입구","line":"4號線"},
+        {"zh":"惠化","en":"Hyehwa","ko":"화화","line":"4號線"},
+        {"zh":"明洞","en":"Myeong-dong","ko":"명동","line":"4號線"},
+        {"zh":"會賢","en":"Hoehyeon","ko":"회현","line":"4號線"},
+        {"zh":"淑大入口","en":"Sookmyung Women's Univ.","ko":"숙대입구","line":"4號線"},
+        {"zh":"三角地","en":"Samgakji","ko":"삼각지","line":"4號線"},
+        {"zh":"新龍山","en":"Sinyongsan","ko":"신용산","line":"4號線"},
+        {"zh":"二村","en":"Ichon","ko":"이촌","line":"4號線"},
+        {"zh":"東氷庫","en":"Dongjak","ko":"동작","line":"4號線"},
+        {"zh":"總神大入口","en":"Chongshin Univ. (Isu)","ko":"총신대입구(이수)","line":"4號線"},
+        {"zh":"果川","en":"Gwacheon","ko":"과천","line":"4號線"},
+        {"zh":"政府果川廳舍","en":"Government Complex Gwacheon","ko":"정부과천청사","line":"4號線"},
+        {"zh":"仁德院","en":"Indeogwon","ko":"인덕원","line":"4號線"},
+        {"zh":"平村","en":"Pyeongchon","ko":"평촌","line":"4號線"},
+        {"zh":"汝矣","en":"Beomgye","ko":"범계","line":"4號線"},
+        {"zh":"烏耳島","en":"Oido","ko":"오이도","line":"4號線"},
+        {"zh":"傍花","en":"Banghwa","line":"5號線"},
+        {"zh":"開花山","en":"Gaehwasan","ko":"개화산","line":"5號線"},
+        {"zh":"金浦機場","en":"Gimpo Int'l Airport","ko":"김포공항","line":"5號線"},
+        {"zh":"松亭","en":"Songjeong","ko":"송정","line":"5號線"},
+        {"zh":"麻谷","en":"Magok","ko":"마곡","line":"5號線"},
+        {"zh":"鉢山","en":"Balsan","ko":"발산","line":"5號線"},
+        {"zh":"登村","en":"Deungchon","ko":"등촌","line":"5號線"},
+        {"zh":"汝矣島","en":"Yeouido","ko":"여의도","line":"5號線"},
+        {"zh":"孔德","en":"Gongdeok","ko":"공덕","line":"5號線"},
+        {"zh":"西大門","en":"Seodaemun","ko":"서대문","line":"5號線"},
+        {"zh":"光化門","en":"Gwanghwamun","ko":"광화문","line":"5號線"},
+        {"zh":"清溪山","en":"Cheonggu","ko":"청구","line":"5號線"},
+        {"zh":"馬場","en":"Majang","ko":"마장","line":"5號線"},
+        {"zh":"君子","en":"Gunja","ko":"군자","line":"5號線"},
+        {"zh":"千戶","en":"Cheonho","ko":"천호","line":"5號線"},
+        {"zh":"江東區廳","en":"Gangdong-gu Office","ko":"강동구청","line":"5號線"},
+        {"zh":"芳荑洞","en":"Bangi","ko":"방이","line":"5號線"},
+        {"zh":"奧林匹克公園","en":"Olympic Park","ko":"올림픽공원","line":"5號線"},
+        {"zh":"上一路","en":"Sangil-dong","ko":"상일동","line":"5號線"},
+        {"zh":"高德","en":"Godeok","ko":"고덕","line":"5號線"},
+        {"zh":"岩寺","en":"Amsa","ko":"암사","line":"8號線"},
+        {"zh":"夢村土城","en":"Mongchontoseong","ko":"몽촌토성","line":"8號線"},
+        {"zh":"石村","en":"Seokchon","ko":"석촌","line":"8號線"},
+        {"zh":"松坡","en":"Songpa","ko":"송파","line":"8號線"},
+        {"zh":"文井","en":"Munjeong","ko":"문정","line":"8號線"},
+        {"zh":"長旨","en":"Jangji","ko":"장지","line":"8號線"},
+        {"zh":"福亭","en":"Bokjeong","ko":"복정","line":"8號線"},
+        {"zh":"山城","en":"Sanseong","ko":"산성","line":"8號線"},
+        {"zh":"南漢山城","en":"Namhansanseong","ko":"남한산성입구","line":"8號線"},
+        {"zh":"丹垈五岔路","en":"Dandaeogeori","ko":"단대오거리","line":"8號線"},
+        {"zh":"新興","en":"Sinheung","ko":"신흥","line":"8號線"},
+        {"zh":"壽進","en":"Sujin","ko":"수진","line":"8號線"},
+        {"zh":"牡丹","en":"Moran","ko":"모란","line":"8號線"},
+        {"zh":"開花","en":"Gaehwa","ko":"개화","line":"9號線"},
+        {"zh":"機場市場","en":"Airport Market","ko":"공항시장","line":"9號線"},
+        {"zh":"新傍花","en":"Sinbanghwa","ko":"신방화","line":"9號線"},
+        {"zh":"麻谷渡口","en":"Magongnaru","ko":"마곡나루","line":"9號線"},
+        {"zh":"楊川鄕校","en":"Yangcheon Hyanggyo","ko":"양천향교","line":"9號線"},
+        {"zh":"加陽","en":"Gayang","ko":"가양","line":"9號線"},
+        {"zh":"證美","en":"Jeungmi","ko":"증미","line":"9號線"},
+        {"zh":"國會議事堂","en":"National Assembly","ko":"국회의사당","line":"9號線"},
+        {"zh":"塞江","en":"Saetgang","ko":"샛강","line":"9號線"},
+        {"zh":"蘆柚","en":"Nodeul","ko":"노들","line":"9號線"},
+        {"zh":"黑石","en":"Heukseok","ko":"흑석","line":"9號線"},
+        {"zh":"九半浦","en":"Gubanpo","ko":"구반포","line":"9號線"},
+        {"zh":"新盤浦","en":"Sinbanpo","ko":"신반포","line":"9號線"},
+        {"zh":"沙坪","en":"Sapyeong","ko":"사평","line":"9號線"},
+        {"zh":"新論峴","en":"Sinnonhyeon","ko":"신논현","line":"9號線"},
+        {"zh":"彦州","en":"Eonju","ko":"언주","line":"9號線"},
+        {"zh":"宣靖陵","en":"Seonjeongneung","ko":"선정릉","line":"9號線"},
+        {"zh":"三成中央","en":"Samseong Jungang","ko":"삼성중앙","line":"9號線"},
+        {"zh":"奉恩寺","en":"Bongeunsa","ko":"봉은사","line":"9號線"},
+        {"zh":"三田","en":"Samjeon","ko":"삼전","line":"9號線"},
+        {"zh":"石村古墳","en":"Seokchon Gobun","ko":"석촌고분","line":"9號線"},
+        {"zh":"松坡渡口","en":"Songpanaru","ko":"송파나루","line":"9號線"},
+        {"zh":"漢城百濟","en":"Hanseong Baekje","ko":"한성백제","line":"9號線"},
+        {"zh":"屯村五輪","en":"Dunchon Oryun","ko":"둔촌오륜","line":"9號線"},
+        {"zh":"中央報勳醫院","en":"VHS Medical Center","ko":"중앙보훈병원","line":"9號線"},
+        {"zh":"獨岩","en":"Dokbawi","ko":"독바위","line":"6號線"},
+        {"zh":"鷹岩（環）","en":"Eungam (loop)","ko":"응암","line":"6號線"},
+        {"zh":"新寺（새절）","en":"Saejeol","ko":"새절","line":"6號線"},
+        {"zh":"證山（明知大）","en":"Jeungsan (Myongji Univ.)","ko":"증산(명지대앞)","line":"6號線"},
+        {"zh":"數碼媒體城","en":"Digital Media City","ko":"디지털미디어시티","line":"6號線"},
+        {"zh":"世界杯競技場","en":"World Cup Stadium","ko":"월드컵경기장","line":"6號線"},
+        {"zh":"麻浦區廳","en":"Mapo-gu Office","ko":"마포구청","line":"6號線"},
+        {"zh":"望遠","en":"Mangwon","ko":"망원","line":"6號線"},
+        {"zh":"上水","en":"Sangsu","ko":"상수","line":"6號線"},
+        {"zh":"廣興倉","en":"Gwangheungchang","ko":"광흥창","line":"6號線"},
+        {"zh":"大興（西江大）","en":"Daeheung (Sogang Univ.)","ko":"대흥(서강대앞)","line":"6號線"},
+        {"zh":"孝昌公園前","en":"Hyochang Park","ko":"효창공원앞","line":"6號線"},
+        {"zh":"綠莎坪（龍山區廳）","en":"Noksapyeong (Yongsan-gu Office)","ko":"녹사평(용산구청)","line":"6號線"},
+        {"zh":"梨泰院","en":"Itaewon","ko":"이태원","line":"6號線"},
+        {"zh":"漢江鎭","en":"Hangangjin","ko":"한강진","line":"6號線"},
+        {"zh":"Beotigogae","en":"Beotigogae","line":"6號線"},
+        {"zh":"昌信","en":"Changsin","ko":"창신","line":"6號線"},
+        {"zh":"普門","en":"Bomun","ko":"보문","line":"6號線"},
+        {"zh":"安岩（高麗大醫院）","en":"Anam (Korea Univ. Hospital)","ko":"안암(고대병원앞)","line":"6號線"},
+        {"zh":"高麗大（鍾岩）","en":"Korea University (Jongam)","ko":"고려대(종암)","line":"6號線"},
+        {"zh":"月谷（同德女大）","en":"Wolgok (Dongduk Women's Univ.)","ko":"월곡(동덕여대)","line":"6號線"},
+        {"zh":"上月谷（KIST）","en":"Sangwolgok (KIST)","ko":"상월곡(한국과학기술연구원)","line":"6號線"},
+        {"zh":"Dolgoji","en":"Dolgoji","line":"6號線"},
+        {"zh":"花郎臺（首爾女大）","en":"Hwarangdae (Seoul Women's Univ.)","ko":"화랑대(서울여대입구)","line":"6號線"},
+        {"zh":"烽火山（首爾醫療院）","en":"Bonghwasan (Seoul Medical Center)","ko":"봉화산(서울의료원)","line":"6號線"},
+        {"zh":"新內","en":"Sinnae","ko":"신내","line":"6號線"},
+        {"zh":"長岩","en":"Jangam","line":"7號線"},
+        {"zh":"水落山","en":"Suraksan","ko":"수락산","line":"7號線"},
+        {"zh":"馬得","en":"Madeul","ko":"마들","line":"7號線"},
+        {"zh":"中溪","en":"Junggye","ko":"중계","line":"7號線"},
+        {"zh":"下溪","en":"Hagye","ko":"하계","line":"7號線"},
+        {"zh":"孔陵","en":"Gongneung","ko":"공릉","line":"7號線"},
+        {"zh":"墨谷","en":"Meokgol","ko":"먹골","line":"7號線"},
+        {"zh":"中和","en":"Junghwa","ko":"중화","line":"7號線"},
+        {"zh":"上鳳","en":"Sangbong","ko":"상봉","line":"7號線"},
+        {"zh":"面牧","en":"Myeonmok","ko":"면목","line":"7號線"},
+        {"zh":"四佳亭","en":"Sagajeong","ko":"사가정","line":"7號線"},
+        {"zh":"龍馬山","en":"Yongmasan","ko":"용마산","line":"7號線"},
+        {"zh":"中谷","en":"Junggok","ko":"중곡","line":"7號線"},
+        {"zh":"兒童大公園","en":"Children's Grand Park","ko":"어린이대공원","line":"7號線"},
+        {"zh":"纛島游園地","en":"Ttukseom Resort","ko":"뚝섬유원지","line":"7號線"},
+        {"zh":"清潭","en":"Cheongdam","ko":"청담","line":"7號線"},
+        {"zh":"江南區廳","en":"Gangnam-gu Office","ko":"강남구청","line":"7號線"},
+        {"zh":"鶴洞","en":"Hak-dong","ko":"학동","line":"7號線"},
+        {"zh":"論峴","en":"Nonhyeon","ko":"논현","line":"7號線"},
+        {"zh":"盤浦","en":"Banpo","ko":"반포","line":"7號線"},
+        {"zh":"內方","en":"Naebang","line":"7號線"},
+        {"zh":"梨水（總神大入口）","en":"Isu (Chongshin Univ.)","ko":"이수(총신대입구)","line":"7號線"},
+        {"zh":"南城","en":"Namseong","ko":"남성","line":"7號線"},
+        {"zh":"崇實大入口（薩皮齋）","en":"Soongsil Univ. (Salpijae)","ko":"숭실대입구(살피재)","line":"7號線"},
+        {"zh":"上道","en":"Sangdo","ko":"상도","line":"7號線"},
+        {"zh":"長承排基","en":"Jangseungbaegi","ko":"장승배기","line":"7號線"},
+        {"zh":"新大方三岔路","en":"Sindaebangsamgeori","ko":"신대방삼거리","line":"7號線"},
+        {"zh":"普羅梅","en":"Boramae Park","ko":"보라매","line":"7號線"},
+        {"zh":"新豐","en":"Sinpung","ko":"신풍","line":"7號線"},
+        {"zh":"南九老","en":"Namguro","ko":"남구로","line":"7號線"},
+        {"zh":"鐵山","en":"Cheolsan","ko":"철산","line":"7號線"},
+        {"zh":"光明十字路口","en":"Gwangmyeongsageori","ko":"광명사거리","line":"7號線"},
+        {"zh":"天王","en":"Cheonwang","ko":"천왕","line":"7號線"},
+        {"zh":"喜鵲園","en":"Kkachiul","ko":"까치ul","line":"7號線"},
+        {"zh":"富川綜合運動場","en":"Bucheon Stadium","ko":"부천종합운동장","line":"7號線"},
+        {"zh":"春衣","en":"Chunui","ko":"춘의","line":"7號線"},
+        {"zh":"新中洞","en":"Sinjung-dong","ko":"신중동","line":"7號線"},
+        {"zh":"富川市廳","en":"Bucheon City Hall","ko":"부천시청","line":"7號線"},
+        {"zh":"上洞","en":"Sang-dong","ko":"상동","line":"7號線"},
+        {"zh":"三山體育館","en":"Samsan Gymnasium","ko":"삼산체육관","line":"7號線"},
+        {"zh":"屈浦川","en":"Gulpocheon","ko":"굴포천","line":"7號線"},
+        {"zh":"富平區廳","en":"Bupyeong-gu Office","ko":"부평구청","line":"7號線"},
+        {"zh":"山谷","en":"Sangok","ko":"산곡","line":"7號線"},
+        {"zh":"石南","en":"Seongnam","ko":"석남","line":"7號線"}
     ];
 
-    // 2. 釜山地鐵資料庫
+    // 2. 釜山地鐵原始資料
     const busanData = [
         {"zh":"多大浦海水浴場","en":"Dadaepo Beach","ko":"다대포해수욕장","line":"1號線"},
         {"zh":"多大浦港","en":"Dadaepo Harbor","ko":"다대포항","line":"1號線"},
@@ -452,18 +619,28 @@
         {"zh":"松亭","en":"Songjeong","ko":"송정","line":"東海線"}
     ];
 
-    // 目前選取的城市資料，預設為首爾
     let currentCity = 'seoul';
     let subwayData = [...seoulData];
 
-    // 切換城市功能
+    // 💡 關鍵智慧配對：計算所有可轉乘站點
+    // 透過掃描整個城市資料庫，把同站名但不同線路的資料收集起來
+    function getTransfersMap(allStations) {
+        const map = {};
+        allStations.forEach(s => {
+            if (!map[s.zh]) {
+                map[s.zh] = new Set();
+            }
+            map[s.zh].add(s.line);
+        });
+        return map;
+    }
+
+    let transfersMap = getTransfersMap(subwayData);
+
+    // 切換城市
     function switchCity(city) {
         currentCity = city;
-        
-        // 移除所有 Tab 的 active 樣式
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        
-        // 清空搜尋框
         document.getElementById('searchInput').value = '';
 
         if (city === 'seoul') {
@@ -476,7 +653,8 @@
             event.target.classList.add('active');
         }
 
-        // 重新繪製列表
+        // 重新計算目前城市的轉乘地圖
+        transfersMap = getTransfersMap(subwayData);
         renderStations(subwayData);
     }
 
@@ -497,9 +675,26 @@
             const card = document.createElement('div');
             card.className = 'station-card';
             
-            // 處理環狀線或特殊字元的 CSS 類名防呆
+            // 目前線路標籤
             const lineClass = `line-${station.line.replace(/（|）|\(|\)/g, '')}`;
             const lineBadgeHtml = station.line ? `<span class="line-badge ${lineClass}">${station.line}</span>` : '';
+
+            // 💡 智慧生成轉乘標籤
+            const allLinesForThisStation = transfersMap[station.zh];
+            let transferHtml = '';
+            
+            // 如果該站出現的線路總數大於 1，代表它是轉乘站
+            if (allLinesForThisStation && allLinesForThisStation.size > 1) {
+                let otherLinesBadges = '';
+                allLinesForThisStation.forEach(line => {
+                    // 排除掉目前顯示的主線路，只留下「可轉乘的其他線路」
+                    if (line !== station.line) {
+                        const tLineClass = `line-${line.replace(/（|）|\(|\)/g, '')}`;
+                        otherLinesBadges += `<span class="line-badge ${tLineClass}" style="font-size:10px; padding:1px 4px;">${line}</span>`;
+                    }
+                });
+                transferHtml = `<div class="transfer-section"><span class="transfer-title">🔄 轉乘：</span>${otherLinesBadges}</div>`;
+            }
 
             card.innerHTML = `
                 <div class="station-info">
@@ -508,6 +703,7 @@
                         ${lineBadgeHtml}
                     </div>
                     <div class="en-name">${station.en}</div>
+                    ${transferHtml}
                 </div>
                 <div class="ko-name">${station.ko}</div>
             `;
@@ -525,7 +721,7 @@
         renderStations(filtered);
     }
 
-    // 網頁初始化載入首爾資料
+    // 初始化
     renderStations(subwayData);
 </script>
 
