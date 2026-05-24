@@ -3,12 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>韓國地鐵即時查詢系統 (首爾/釜山完全體)</title>
+    <title>韓國地鐵即時查詢系統 v2.0</title>
     <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --container-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --tab-inactive-bg: #f1f5f9;
+            --ko-bg: #eff6ff;
+            --ko-text: #1e40af;
+        }
+
+        /* 🌙 完美支援智慧型手機深色模式 (Dark Mode) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --container-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-sub: #94a3b8;
+                --border-color: #334155;
+                --border-hover: #475569;
+                --tab-inactive-bg: #334155;
+                --ko-bg: #1e3a8a;
+                --ko-text: #60a5fa;
+            }
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             margin: 0;
             padding: 20px;
             display: flex;
@@ -17,7 +44,7 @@
         .container {
             width: 100%;
             max-width: 720px;
-            background: white;
+            background: var(--container-bg);
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
@@ -26,19 +53,19 @@
             font-size: 24px;
             margin-bottom: 5px;
             text-align: center;
-            color: #1e293b;
+            color: var(--text-main);
         }
         .subtitle {
             text-align: center;
-            color: #64748b;
+            color: var(--text-sub);
             font-size: 14px;
             margin-bottom: 20px;
         }
         .city-tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
         }
         .tab-btn {
@@ -48,8 +75,8 @@
             font-weight: bold;
             border: none;
             border-radius: 8px;
-            background-color: #f1f5f9;
-            color: #64748b;
+            background-color: var(--tab-inactive-bg);
+            color: var(--text-sub);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -58,14 +85,41 @@
             color: white;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
+        
+        /* ⏰ 歷史紀錄優化 */
+        .history-section {
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .history-title {
+            color: var(--text-sub);
+        }
+        .history-tag {
+            background: var(--tab-inactive-bg);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+        .history-tag:hover {
+            border-color: #3b82f6;
+        }
+
         .search-box {
             width: 100%;
             padding: 14px;
             font-size: 16px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             border-radius: 10px;
             box-sizing: border-box;
             outline: none;
+            background: var(--container-bg);
+            color: var(--text-main);
             transition: border-color 0.2s;
         }
         .search-box:focus {
@@ -75,7 +129,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 13px;
-            color: #64748b;
+            color: var(--text-sub);
             margin: 12px 0;
             padding: 0 4px;
         }
@@ -85,14 +139,21 @@
             margin-top: 10px;
         }
         .station-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 14px 18px;
+            padding: 16px 18px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .station-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            border-color: var(--border-hover);
         }
         .station-info {
             display: flex;
@@ -101,60 +162,104 @@
             width: 65%;
         }
         .zh-name {
-            font-size: 17px;
-            font-weight: 600;
-            color: #0f172a;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
         }
         .en-name {
             font-size: 12px;
-            color: #64748b;
+            color: var(--text-sub);
+            margin-top: 2px;
         }
         .meta-info {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
             flex-wrap: wrap;
         }
-        .line-badge {
+        
+        /* ➊ 主線標籤圓角化設計 */
+        .line-pill {
             font-size: 11px;
             padding: 2px 8px;
             color: white;
-            border-radius: 4px;
+            border-radius: 20px;
             font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
         }
-        .code-info {
-            font-size: 11px;
-            color: #94a3b8;
-            font-family: monospace;
-        }
+        
         .transfer-section {
             display: flex;
             align-items: center;
             gap: 4px;
             margin-top: 4px;
             font-size: 11px;
-            color: #64748b;
+            color: var(--text-sub);
             flex-wrap: wrap;
         }
         .transfer-title {
-            color: #94a3b8;
+            color: var(--text-sub);
             font-weight: 500;
+        }
+        .transfer-badge {
+            font-size: 10px;
+            padding: 1px 6px;
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .ko-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            width: 35%;
         }
         .ko-name {
             font-size: 19px;
             font-weight: bold;
-            color: #1e40af;
-            background: #eff6ff;
+            color: var(--ko-text);
+            background: var(--ko-bg);
             padding: 6px 14px;
             border-radius: 8px;
             letter-spacing: 0.5px;
             text-align: right;
-            width: 35%;
             box-sizing: border-box;
+            max-width: 100%;
+        }
+        .copy-hint {
+            font-size: 10px;
+            color: var(--text-sub);
+        }
+        
+        /* 烤吐司微型提示框 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #0f172a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
         .no-result {
             text-align: center;
-            color: #94a3b8;
+            color: var(--text-sub);
             padding: 40px;
             font-size: 15px;
         }
@@ -163,15 +268,21 @@
 <body>
 
 <div class="container">
-    <h1>🇰🇷 韓國地鐵即時查詢系統</h1>
-    <div class="subtitle">自動計算轉乘線路 · 首爾/釜山免上傳雙城隨身版</div>
+    <h1>🇰🇷 韓國地鐵即時查詢系統 v2.0</h1>
+    <div class="subtitle">提供中文英文 地鐵站號 查詢，大站智慧合併 · 點擊複製韓文站名</div>
     
     <div class="city-tabs">
-        <button class="tab-btn active" onclick="switchCity('seoul')">誠信首爾 (Seoul)</button>
-        <button class="tab-btn" onclick="switchCity('busan')">海洋釜山 (Busan)</button>
+        <button class="tab-btn active" id="btn-seoul" onclick="switchCity('seoul')">誠信首爾 (Seoul)</button>
+        <button class="tab-btn" id="btn-busan" onclick="switchCity('busan')">海洋釜山 (Busan)</button>
     </div>
     
-    <input type="text" id="searchInput" class="search-box" placeholder="🔍 輸入中文或英文站名搜尋..." oninput="filterStations()">
+    <!-- ⏱️ 歷史快選區 -->
+    <div class="history-section" id="historySection">
+        <span class="history-title">最近查過：</span>
+        <span style="color:var(--text-sub); font-style:italic;">暫無歷史紀錄</span>
+    </div>
+    
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 輸入中文、英文、韓文或站點編號..." oninput="filterStations()">
     
     <div class="status-bar">
         <div id="cityStatus">目前城市：首爾地鐵</div>
@@ -181,18 +292,21 @@
     <div class="station-list" id="stationList"></div>
 </div>
 
+<div id="toast" class="toast">📋 已複製韓文站名，可直接貼進地圖！</div>
+
 <script>
-    // 🎨 跨城官方線路色彩對照庫（用於轉乘標籤的動態高亮配色）
+    // 🎨 全球官方地鐵路線色彩標準庫
     const colorPalette = {
         "深藍色": "#003da5", "綠色": "#37b42d", "橘色": "#fa5b00", "水藍色": "#00a5de", 
         "紫色": "#a05eb5", "棕色": "#cd7c2f", "橄欖綠": "#747f00", "粉紅色": "#e6186c", 
         "金色": "#bdb092", "紅色": "#ea1c24", "草綠色": "#7dc400", "淡綠色": "#b7ec59", 
         "藍綠色": "#00b594", "金黃色": "#f1b300", "黃色": "#ffcc00", "湖水綠": "#50bcdf",
-        "天藍色": "#009cd6", "橘黃色": "#ff9d00", "藍色": "#1E90FF", "藍紫色": "#6A5ACD"
+        "天藍色": "#009cd6", "橘黃色": "#ff9d00", "藍色": "#1E90FF", "藍紫色": "#6A5ACD",
+        "綠黃色": "#b7ec59"
     };
 
-    // 1. 首爾地鐵完整數據
-    const seoulData = [
+    // 1. 首爾完整原始數據庫
+    const rawSeoulData = [
         {"lineName":"1號線","id":"101","zh":"逍遙山","en":"Soyosan","ko":"소요산","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"102","zh":"東豆川","en":"Dongducheon","ko":"동두천","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"103","zh":"保山","en":"Bosan","ko":"보산","transfers":"無","lineColor":"#003da5"},
@@ -259,7 +373,7 @@
         {"lineName":"1號線","id":"P143","zh":"禿山","en":"Doksan","ko":"독산","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"P144","zh":"衿川區廳","en":"Geumcheon-gu Office","ko":"금천구청","transfers":"1號線光明支線（深藍色）","lineColor":"#003da5"},
         {"lineName":"1號線","id":"P144-1","zh":"光明","en":"Gwangmyeong","ko":"광명","transfers":"KTX 高鐵、光明接駁線","lineColor":"#003da5"},
-        {"lineName":"1號線","id":"P145","zh":"石水","en":"Seoksu","ko":"석수","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"1號線","id":"P145","zh":"石水","en":"Seoksu","ko":"석su","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"P146","zh":"冠岳","en":"Gwanak","ko":"관악","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"P147","zh":"安養","en":"Anyang","ko":"안양","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"P148","zh":"鳴鶴","en":"Myeonghak","ko":"명학","transfers":"無","lineColor":"#003da5"},
@@ -305,7 +419,7 @@
         {"lineName":"2號線","id":"212","zh":"建國大學","en":"Konkuk Univ.","ko":"건대입구","transfers":"7號線（橄欖綠）","lineColor":"#37b42d"},
         {"lineName":"2號線","id":"213","zh":"九宜","en":"Guui","ko":"구의","transfers":"無","lineColor":"#37b42d"},
         {"lineName":"2號線","id":"214","zh":"江邊","en":"Gangbyeon","ko":"강변","transfers":"無","lineColor":"#37b42d"},
-        {"lineName":"2號線","id":"215","zh":"蠶室納루","en":"Jamsillaru","ko":"잠실나루","transfers":"無","lineColor":"#37b42d"},
+        {"lineName":"2號線","id":"215","zh":"蠶室渡口","en":"Jamsillaru","ko":"잠실나루","transfers":"無","lineColor":"#37b42d"},
         {"lineName":"2號線","id":"216","zh":"蠶室","en":"Jamsil","ko":"잠실","transfers":"8號線（粉紅色）","lineColor":"#37b42d"},
         {"lineName":"2號線","id":"217","zh":"蠶室新川","en":"Jamsilsaenae","ko":"잠실새내","transfers":"無","lineColor":"#37b42d"},
         {"lineName":"2號線","id":"218","zh":"綜合運動場","en":"Sports Complex","ko":"종합운동장","transfers":"9號線（金色）","lineColor":"#37b42d"},
@@ -435,7 +549,7 @@
         {"lineName":"4號線","id":"452","zh":"草芝","en":"Choji","ko":"초지","transfers":"水仁·盆唐線（黃色）、西海線（草綠色）","lineColor":"#00a5de"},
         {"lineName":"4號線","id":"453","zh":"安山","en":"Ansan","ko":"안산","transfers":"水仁·盆唐線（黃色）","lineColor":"#00a5de"},
         {"lineName":"4號線","id":"454","zh":"新吉溫泉","en":"Singiloncheon","ko":"신길온천","transfers":"水仁·盆唐線（黃色）","lineColor":"#00a5de"},
-        {"lineName":"4號線","id":"455","zh":"正王","en":"Jeongwang","ko":"정왕","transfers":"水仁·盆唐線（黃色）","lineColor":"#00a5de"},
+        {"lineName":"4號線","id":"455","zh":"正王","en":"Jeongwang","ko":"정wang","transfers":"水仁·盆唐線（黃色）","lineColor":"#00a5de"},
         {"lineName":"4號線","id":"456","zh":"烏耳島","en":"Oido","ko":"오이도","transfers":"水仁·盆唐線（黃色）","lineColor":"#00a5de"},
         {"lineName":"5號線","id":"510","zh":"傍花","en":"Banghwa","ko":"방화","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"511","zh":"開花山","en":"Gaehwasan","ko":"개화산","transfers":"無","lineColor":"#a05eb5"},
@@ -457,12 +571,12 @@
         {"lineName":"5號線","id":"527","zh":"麻浦","en":"Mapo","ko":"마포","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"528","zh":"孔德","en":"Gongdeok","ko":"공덕","transfers":"6號線（棕色）、機場鐵路（水藍色）、京義中央線（湖水綠）","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"529","zh":"阿峴里","en":"Aeogae","ko":"애오개","transfers":"無","lineColor":"#a05eb5"},
-        {"lineName":"5號線","id":"530","zh":"忠正路","en":"Chungjeongno","ko":"충정ろ","transfers":"2號線（綠色）","lineColor":"#a05eb5"},
+        {"lineName":"5號線","id":"530","zh":"忠正路","en":"Chungjeongno","ko":"충정로","transfers":"2號線（綠色）","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"531","zh":"西大門","en":"Seodaemun","ko":"서대문","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"532","zh":"光化門","en":"Gwanghwamun","ko":"광화문","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"533","zh":"鍾路3街","en":"Jongno 3(sam)-ga","ko":"종로3가","transfers":"1號線（深藍色）、3號線（橘色）","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"534","zh":"乙支路4街","en":"Euljiro 4(sa)-ga","ko":"을지로4가","transfers":"2號線（綠色）","lineColor":"#a05eb5"},
-        {"lineName":"5號線","id":"535","zh":"東大門歷史文化公園","en":"Dongdaemun History & Culture Park","ko":"동대문역사문화공원","transfers":"2號線（綠色）、4號線（水藍色）","lineColor":"#a05eb5"},
+        {"lineName":"5號線","id":"535","zh":"東大門歷史文化公園","en":"Dongdaemun History & Culture Park","ko":"동대문역사문화공員","transfers":"2號線（綠色）、4號線（水藍色）","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"536","zh":"青丘","en":"Cheonggu","ko":"청구","transfers":"6號線（棕色）","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"537","zh":"新金湖","en":"Singumho","ko":"신금호","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"538","zh":"杏堂","en":"Haengdang","ko":"행당","transfers":"無","lineColor":"#a05eb5"},
@@ -471,7 +585,7 @@
         {"lineName":"5號線","id":"541","zh":"踏十里","en":"Dapsimni","ko":"답십리","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"542","zh":"長漢坪","en":"Janghanpyeong","ko":"장한평","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"543","zh":"君子","en":"Gunja","ko":"군자","transfers":"7號線（橄欖綠）","lineColor":"#a05eb5"},
-        {"lineName":"5號線","id":"544","zh":"峨嵯山","en":"Achasan","ko":"아차산","transfers":"無","lineColor":"#a05eb5"},
+        {"lineName":"5號線","id":"544","zh":"峨鐵山","en":"Achasan","ko":"아차산","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"545","zh":"廣渡口","en":"Gwangnaru","ko":"광나루","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"546","zh":"千戶","en":"Cheonho","ko":"천호","transfers":"8號線（粉紅色）","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"547","zh":"江東","en":"Gangdong","ko":"강동","transfers":"5號線分支線（紫色）","lineColor":"#a05eb5"},
@@ -483,7 +597,7 @@
         {"lineName":"5號線","id":"P553","zh":"巨余","en":"Geoyeo","ko":"거여","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"P554","zh":"馬川","en":"Macheon","ko":"마천","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"548","zh":"吉洞","en":"Gil-dong","ko":"길동","transfers":"無","lineColor":"#a05eb5"},
-        {"lineName":"5號線","id":"549","zh":"굽은다利","en":"Gubeundari","ko":"굽은다리","transfers":"無","lineColor":"#a05eb5"},
+        {"lineName":"5號線","id":"549","zh":"굽은다리","en":"Gubeundari","ko":"굽은다리","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"550","zh":"明逸","en":"Myeongil","ko":"명일","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"551","zh":"高德","en":"Godeok","ko":"고덕","transfers":"無","lineColor":"#a05eb5"},
         {"lineName":"5號線","id":"552","zh":"上一洞","en":"Sangil-dong","ko":"상일동","transfers":"無","lineColor":"#a05eb5"},
@@ -512,7 +626,7 @@
         {"lineName":"6號線","id":"628","zh":"三角地","en":"Samgakji","ko":"삼각지","transfers":"4號線（水藍色）","lineColor":"#cd7c2f"},
         {"lineName":"6號線","id":"629","zh":"綠莎坪","en":"Noksapyeong","ko":"녹사평","transfers":"無","lineColor":"#cd7c2f"},
         {"lineName":"6號線","id":"630","zh":"黎泰院","en":"Itaewon","ko":"이태원","transfers":"無","lineColor":"#cd7c2f"},
-        {"lineName":"6號線","id":"631","zh":"漢江鎮","en":"Hangangjin","ko":"한강진","transfers":"無","lineColor":"#cd7c2f"},
+        {"lineName":"6號線","id":"631","zh":"漢江鎮","en":"Hanggangjin","ko":"한강진","transfers":"無","lineColor":"#cd7c2f"},
         {"lineName":"6號線","id":"632","zh":"波提高介","en":"Beotigogae","ko":"버티고개","transfers":"無","lineColor":"#cd7c2f"},
         {"lineName":"6號線","id":"633","zh":"藥水","en":"Yaksu","ko":"약수","transfers":"3號線（橘色）","lineColor":"#cd7c2f"},
         {"lineName":"6號線","id":"634","zh":"青丘","en":"Cheonggu","ko":"청구","transfers":"5號線（紫色）","lineColor":"#cd7c2f"},
@@ -591,7 +705,7 @@
         {"lineName":"8號線","id":"809","zh":"岩寺歷史公園","en":"Amsa History Park","ko":"암사역사공원","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"810","zh":"岩寺","en":"Amsa","ko":"암사","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"811","zh":"千戶","en":"Cheonho","ko":"천호","transfers":"5號線（紫色）","lineColor":"#e6186c"},
-        {"lineName":"8號線","id":"812","zh":"江東區廳","en":"Gangdong-gu Office","ko":"강동구청","transfers":"無","lineColor":"#e6186c"},
+        {"lineName":"8號線","id":"812","zh":"江東區廳","en":"Gangdong-gu Office","ko":"강東구청","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"813","zh":"夢村土城","en":"Mongchontoseong","ko":"몽촌토성","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"814","zh":"蠶室","en":"Jamsil","ko":"잠실","transfers":"2號線（綠色）","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"815","zh":"石村","en":"Seokchon","ko":"석촌","transfers":"9號線（金色）","lineColor":"#e6186c"},
@@ -599,7 +713,7 @@
         {"lineName":"8號線","id":"817","zh":"可樂市場","en":"Garak Market","ko":"가락시장","transfers":"3號線（橘色）","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"818","zh":"文井","en":"Munjeong","ko":"문정","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"819","zh":"長旨","en":"Jangji","ko":"장지","transfers":"無","lineColor":"#e6186c"},
-        {"lineName":"8號線","id":"820","zh":"福亭","en":"Bokjeong","ko":"복정","transfers":"水仁·盆唐線（黃色）","lineColor":"#e6186c"},
+        {"lineName":"8號線","id":"820","zh":"福井","en":"Bokjeong","ko":"복정","transfers":"水仁·盆唐線（黃色）","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"821","zh":"南慰禮","en":"Namwirye","ko":"남위례","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"822","zh":"山城","en":"Sanseong","ko":"산성","transfers":"無","lineColor":"#e6186c"},
         {"lineName":"8號線","id":"823","zh":"南漢山城入口","en":"Namhansanseong","ko":"남한산성입구","transfers":"無","lineColor":"#e6186c"},
@@ -669,7 +783,7 @@
         {"lineName":"西海線","id":"S16","zh":"陵谷","en":"Neunggok","ko":"능곡","transfers":"京義中央線（湖水綠）","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S17","zh":"金浦機場","en":"Gimpo Int'l Airport","ko":"김포공항","transfers":"5號線（紫色）、9號線（金色）、機場鐵路（水藍色）、金浦黃金線（黃色）","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S18","zh":"遠宗","en":"Wonjong","ko":"원종","transfers":"無","lineColor":"#7dc400"},
-        {"lineName":"西海線","id":"S19","zh":"富川綜合運動場","en":"Bucheon Stadium","ko":"부천종합운동장","transfers":"7號線（橄欖綠）","lineColor":"#7dc400"},
+        {"lineName":"西海線","id":"S19","zh":"富川綜合運動場","en":"Bucheon Stadium","ko":"부천종合運動場","transfers":"7號線（橄欖綠）","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S20","zh":"素砂","en":"Sosa","ko":"소사","transfers":"1號線（深藍色）","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S21","zh":"始興大也","en":"Siheung Daeya","ko":"시흥대야","transfers":"無","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S22","zh":"新川","en":"Sincheon","ko":"신천","transfers":"無","lineColor":"#7dc400"},
@@ -681,7 +795,7 @@
         {"lineName":"西海線","id":"S28","zh":"草芝","en":"Choji","ko":"초지","transfers":"4號線（水藍色）、水仁·盆唐線（黃色）","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S29","zh":"時雨","en":"Siu","ko":"시우","transfers":"無","lineColor":"#7dc400"},
         {"lineName":"西海線","id":"S30","zh":"元時","en":"Wonsi","ko":"원시","transfers":"無","lineColor":"#7dc400"},
-        {"lineName":"牛耳新設線","id":"S110","zh":"北漢山牛耳","en":"Bukhansan Ui","ko":"북한산우이","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"牛耳新設線","id":"S110","zh":"北漢山牛耳","en":"Bukhansan Ui","ko":"북한산우い","transfers":"無","lineColor":"#b7ec59"},
         {"lineName":"牛耳新設線","id":"S111","zh":"松林公園","en":"Solbat Park","ko":"솔밭공원","transfers":"無","lineColor":"#b7ec59"},
         {"lineName":"牛耳新設線","id":"S112","zh":"4.19民主墓地","en":"4.19 National Cemetery","ko":"4.19민주묘지","transfers":"無","lineColor":"#b7ec59"},
         {"lineName":"牛耳新設線","id":"S113","zh":"加五里","en":"Gaori","ko":"가오리","transfers":"無","lineColor":"#b7ec59"},
@@ -715,18 +829,18 @@
         {"lineName":"金浦黃金線","id":"G108","zh":"風舞","en":"Pungmu","ko":"풍무","transfers":"無","lineColor":"#f1b300"},
         {"lineName":"金浦黃金線","id":"G109","zh":"高村","en":"Gochon","ko":"고촌","transfers":"無","lineColor":"#f1b300"},
         {"lineName":"金浦黃金線","id":"G110","zh":"金浦機場","en":"Gimpo Int'l Airport","ko":"김포공항","transfers":"5號線（紫色）、9號線（金色）、機場鐵路（水藍色）、西海線（草綠色）","lineColor":"#f1b300"},
-        {"lineName":"水仁·盆探線","id":"K210","zh":"往十里","en":"Wangsimni","ko":"왕십리","transfers":"2號線（綠色）、5號線（紫色）、京義中央線（湖水綠）","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K211","zh":"首爾林","en":"Seoul Forest","ko":"서울숲","transfers":"無","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K212","zh":"狎鷗亭羅德奧","en":"Apgujeong Rodeo","ko":"압구정로데오","transfers":"無","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K213","zh":"江南區廳","en":"Gangnam-gu Office","ko":"강남구청","transfers":"7號線（橄欖綠）","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K214","zh":"宣靖陵","en":"Seonjeongneung","ko":"선정릉","transfers":"9號線（金色）","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K215","zh":"宣陵","en":"Seolleung","ko":"선릉","transfers":"2號線（綠色）","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K216","zh":"漢堤","en":"Hanti","ko":"한티","transfers":"無","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K217","zh":"道谷","en":"Dogok","ko":"도곡","transfers":"3號線（橘色）","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K218","zh":"九龍","en":"Guryong","ko":"구룡","transfers":"無","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K219","zh":"開浦洞","en":"Gaepo-dong","ko":"개포동","transfers":"無","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K220","zh":"大母山入口","en":"Daemosan","ko":"대모산입구","transfers":"無","lineColor":"#ffcc00"},
-        {"lineName":"水仁·盆探線","id":"K221","zh":"水西","en":"Suseo","ko":"수서","transfers":"3號線（橘色）、SRT高鐵","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K210","zh":"往十里","en":"Wangsimni","ko":"왕십리","transfers":"2號線（綠色）、5號線（紫色）、京義中央線（湖水綠）","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K211","zh":"首爾林","en":"Seoul Forest","ko":"서울숲","transfers":"無","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K212","zh":"狎鷗亭羅德奧","en":"Apgujeong Rodeo","ko":"압구정로데오","transfers":"無","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K213","zh":"江南區廳","en":"Gangnam-gu Office","ko":"강남구청","transfers":"7號線（橄欖綠）","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K214","zh":"宣靖陵","en":"Seonjeongneung","ko":"선정릉","transfers":"9號線（金色）","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K215","zh":"宣陵","en":"Seolleung","ko":"선릉","transfers":"2號線（綠色）","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K216","zh":"漢堤","en":"Hanti","ko":"한티","transfers":"無","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K217","zh":"道谷","en":"Dogok","ko":"도곡","transfers":"3號線（橘色）","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K218","zh":"九龍","en":"Guryong","ko":"구룡","transfers":"無","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K219","zh":"開浦洞","en":"Gaepo-dong","ko":"개포동","transfers":"無","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K220","zh":"大母山入口","en":"Daemosan","ko":"대모산입구","transfers":"無","lineColor":"#ffcc00"},
+        {"lineName":"水仁·盆唐線","id":"K221","zh":"水西","en":"Suseo","ko":"수서","transfers":"3號線（橘色）、SRT高鐵","lineColor":"#ffcc00"},
         {"lineName":"京義中央線","id":"K315","zh":"弘大入口","en":"Hongik Univ.","ko":"홍대입구","transfers":"2號線（綠色）、機場鐵路（水藍色）","lineColor":"#50bcdf"},
         {"lineName":"京義中央線","id":"K316","zh":"西江大學","en":"Sogang Univ.","ko":"서강대","transfers":"無","lineColor":"#50bcdf"},
         {"lineName":"京義中央線","id":"K317","zh":"孔德","en":"Gongdeok","ko":"공덕","transfers":"5號線（紫色）、6號線（棕色）、機場鐵路（水藍色）","lineColor":"#50bcdf"},
@@ -740,95 +854,95 @@
         {"lineName":"京義中央線","id":"K116","zh":"往十里","en":"Wangsimni","ko":"왕십리","transfers":"2號線（綠色）、5號線（紫色）、水仁·盆唐線（黃色）","lineColor":"#50bcdf"},
         {"lineName":"京義中央線","id":"K117","zh":"清涼里","en":"Cheongnyangni","ko":"청량리","transfers":"1號線（深藍色）、水仁·盆唐線（黃色）","lineColor":"#50bcdf"},
         {"lineName":"京義中央線","id":"K118","zh":"回基","en":"Hoegi","ko":"회기","transfers":"1號線（深藍色）","lineColor":"#50bcdf"},
-        {"lineName":"AREX / 空港線","id":"A01","zh":"首爾站","en":"Seoul Station","ko":"서울역","transfers":"1號線（深藍色）、4號線（水藍色）、京義中央線（湖水綠）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A02","zh":"孔德","en":"Gongdeok","ko":"공덕","transfers":"5號線（紫色）、6號線（棕色）、京義中央線（湖水綠）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A03","zh":"弘大入口","en":"Hongik Univ.","ko":"홍대입구","transfers":"2號線（綠色）、京義中央線（湖水綠）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A04","zh":"數碼媒體城","en":"Digital Media City","ko":"디지털미디어시티","transfers":"6號線（棕色）、京義中央線（湖水綠）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A041","zh":"麻谷渡口","en":"Magongnaru","ko":"마곡나루","transfers":"9號線（金色）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A05","zh":"金浦機場","en":"Gimpo Int'l Airport","ko":"김포공항","transfers":"5號線（紫色）、9號線（金色）、金浦黃金線（金黃色）、西海線（草綠色）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A06","zh":"桂陽","en":"Gyeyang","ko":"계양","transfers":"仁川1號線（天藍色）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A07","zh":"黔岩","en":"Geomam","ko":"검암","transfers":"仁川2號線（橘黃色）","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A071","zh":"青羅國際都市","en":"Cheongna International City","ko":"청라국제도시","transfers":"無","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A08","zh":"永宗","en":"Yeongjong","ko":"영종","transfers":"無","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A09","zh":"雲西","en":"Unseo","ko":"운서","transfers":"無","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A10","zh":"機場貨運航廈","en":"Incheon Int'l Airport Cargo Terminal","ko":"인천공항화물청사","transfers":"無","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A11","zh":"仁川國際機場1航廈","en":"Incheon Int'l Airport Terminal 1","ko":"인천공항1터미널","transfers":"無","lineColor":"#00a5de"},
-        {"lineName":"AREX / 空港線","id":"A12","zh":"仁川國際機場2航廈","en":"Incheon Int'l Airport Terminal 2","ko":"인천공항2터미널","transfers":"無","lineColor":"#00a5de"},
-        {"lineName":"仁川地鐵 1 號線","id":"I110","zh":"桂陽","en":"Gyeyang","ko":"계양","transfers":"機場鐵路（水藍色）","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I111","zh":"橘大","en":"Gyulhyeon","ko":"귤현","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I112","zh":"朴村","en":"Bakchon","ko":"박촌","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I113","zh":"林鶴","en":"Imhak","ko":"임학","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I114","zh":"計算","en":"Gyesan","ko":"계산","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I115","zh":"京仁教大前","en":"Gyeongin Nat'l Univ. of Education","ko":"경인교대입구","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I116","zh":"鵲戰","en":"Jakjeon","ko":"작전","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I117","zh":"葛山","en":"Galsan","ko":"갈산","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I118","zh":"富平區廳","en":"Bupyeong-gu Office","ko":"부평구청","transfers":"7號線（橄欖綠）","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I119","zh":"富平市場","en":"Bupyeong Market","ko":"부평시장","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I120","zh":"富平","en":"Bupyeong","ko":"부평","transfers":"1號線（深藍色）","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I121","zh":"東樹","en":"Dongsu","ko":"동수","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I122","zh":"富平三街","en":"Bupyeong-samgeori","ko":"부평삼거리","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I123","zh":"間石五街","en":"Ganseok-ogwori","ko":"간석오거리","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I124","zh":"仁川市廳","en":"Incheon City Hall","ko":"인천시청","transfers":"仁川2號線（橘黃色）","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I125","zh":"藝術中心","en":"Arts Center","ko":"예술회관","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I126","zh":"仁川客運站","en":"Incheon Bus Terminal","ko":"인천터미널","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I127","문鶴競技場":"文鶴競技場","zh":"文鶴競技場","en":"Munhak Sports Complex","ko":"문학경기장","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I128","zh":"仙鶴","en":"Seonhak","ko":"선학","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I129","zh":"新延","en":"Sinyeon","ko":"신연","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I130","zh":"源仁齋","en":"Woninjae","ko":"원인재","transfers":"水仁·盆唐線（黃色）","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I131","zh":"東春","en":"Dongchun","ko":"동춘","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I132","zh":"東幕","en":"Dongmak","ko":"동막","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I133","zh":"校園城","en":"Campus Town","ko":"캠퍼스타운","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I134","zh":"科技園區","en":"Techno Park","ko":"테크노파크","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I135","zh":"知識情報園區","en":"BIT Zone","ko":"지식정보단지","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I136","zh":"仁川大入口","en":"Incheon Nat'l Univ.","ko":"인천대입구","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I137","zh":"中央公園","en":"Central Park","ko":"센틀럴파크","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I138","zh":"國際業務地區","en":"Int'l Business District","ko":"국제업무지구","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 1 號線","id":"I139","zh":"松島月光慶典公園","en":"Songdo Moonlight Festival Park","ko":"송도달빛축제공원","transfers":"無","lineColor":"#009cd6"},
-        {"lineName":"仁川地鐵 2 號線","id":"I201","zh":"黔丹梧柳","en":"Geomdan Oryu","ko":"검단오류","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I202","zh":"旺吉","en":"Wanggil","ko":"왕길","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I203","zh":"黔丹十字路口","en":"Geomdan Sageori","ko":"검단사거리","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I204","zh":"麻田","en":"Majeon","ko":"마전","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I205","zh":"完井","en":"Wanjeong","ko":"완정","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I206","zh":"篤亭","en":"Dokjeong","ko":"독정","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I207","zh":"黔岩","en":"Geomam","ko":"검암","transfers":"機場鐵路（水藍色）","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I208","zh":"黔巴威","en":"Geombawi","ko":"검바위","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I209","zh":"亞運會賽場","en":"Asiad Stadium","ko":"아시아드경기장","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I210","zh":"西區廳","en":"Seogu Office","ko":"서구청","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I211","zh":"佳庭","en":"Gajeong","ko":"가정","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I212","zh":"佳庭中央市場","en":"Gajeong Jungang Market","ko":"가정중앙시장","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I213","zh":"西部女性會館","en":"Seobu Woman's Community Center","ko":"서부여성회관","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I214","zh":"石南","en":"Seoknam","ko":"석남","transfers":"7號線（橄欖綠）","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I215","zh":"佳佐","en":"Gajwa","ko":"가좌","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I216","zh":"佳才耳","en":"Gajaeul","ko":"가재울","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I217","zh":"朱安國家產團","en":"Juan National Industrial Complex","ko":"주안국가산단","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I218","zh":"朱安","en":"Juan","ko":"주안","transfers":"1號線（深藍色）","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I219","zh":"市民公園","en":"Citizens Park","ko":"시민공원","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I220","zh":"石岩市場","en":"Seokbawi Market","ko":"석바위시장","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I221","zh":"仁川市廳","en":"Incheon City Hall","ko":"인천시청","transfers":"仁川1號線（天藍色）","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I222","zh":"石川十字路口","en":"Seokcheon Sageori","ko":"석천사거리","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I223","zh":"沙萊內市場","en":"Moraenae Market","ko":"모래내시장","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I224","zh":"萬壽","en":"Mansu","ko":"만수","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I225","zh":"南洞區廳","en":"Namdong-gu Office","ko":"남동구청","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I226","zh":"仁川大公園","en":"Incheon Grand Park","ko":"인천대공원","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"仁川地鐵 2 號線","id":"I227","zh":"雲宴","en":"Unyeon","ko":"운연","transfers":"無","lineColor":"#ff9d00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U110","zh":"鉢谷","en":"Balgok","ko":"발곡","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U111","zh":"回龍","en":"Hoeryong","ko":"회룡","transfers":"1號線（深藍色）","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U112","zh":"輕電鐵議政府","en":"LRT Uijeongbu","ko":"경전철의정부","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U113","zh":"議政府市廳","en":"Uijeongbu City Hall","ko":"의정부시청","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U114","zh":"興宣","en":"Heungseon","ko":"흥선","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U115","zh":"中央","en":"Jungang","ko":"중앙","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U116","zh":"東梧","en":"Dong-o","ko":"동오","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U117","zh":"新谷","en":"Singok","ko":"신곡","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U118","zh":"京畿道廳北部廳舍","en":"Gyeonggi-do Government Office North","ko":"경기도청북부청사","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U119","zh":"孝子","en":"Hyoja","ko":"효자","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U120","zh":"昆弟","en":"Gonje","ko":"곤제","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U121","zh":"魚龍","en":"Eoryong","ko":"어룡","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U122","zh":"松山","en":"Songsan","ko":"송산","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U123","zh":"塔石","en":"Tapseok","ko":"탑석","transfers":"無","lineColor":"#fa5b00"},
-        {"lineName":"議政府輕電鐵（U Line）","id":"U125","zh":"高山","en":"Gosan","ko":"고산","transfers":"無","lineColor":"#fa5b00"},
+        {"lineName":"機場鐵路","id":"A01","zh":"首爾站","en":"Seoul Station","ko":"서울역","transfers":"1號線（深藍色）、4號線（水藍色）、京義中央線（湖水綠）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A02","zh":"孔德","en":"Gongdeok","ko":"공덕","transfers":"5號線（紫色）、6號線（棕色）、京義中央線（湖水綠）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A03","zh":"弘大入口","en":"Hongik Univ.","ko":"홍대입구","transfers":"2號線（綠色）、京義中央線（湖水綠）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A04","zh":"數碼媒體城","en":"Digital Media City","ko":"디지털미디어시티","transfers":"6號線（棕色）、京義中央線（湖水綠）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A041","zh":"麻谷渡口","en":"Magongnaru","ko":"마곡나루","transfers":"9號線（金色）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A05","zh":"金浦機場","en":"Gimpo Int'l Airport","ko":"김포공항","transfers":"5號線（紫色）、9號線（金色）、金浦黃金線（金黃色）、西海線（草綠色）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A06","zh":"桂陽","en":"Gyeyang","ko":"계양","transfers":"仁川1號線（天藍色）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A07","zh":"黔岩","en":"Geomam","ko":"검암","transfers":"仁川2號線（橘黃色）","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A071","zh":"青羅國際都市","en":"Cheongna International City","ko":"청라국제도시","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A08","zh":"永宗","en":"Yeongjong","ko":"영종","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A09","zh":"雲西","en":"Unseo","ko":"운서","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A10","zh":"機場貨運航廈","en":"Incheon Int'l Airport Cargo Terminal","ko":"인천공항화물청사","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A11","zh":"仁川國際機場1航廈","en":"Incheon Int'l Airport Terminal 1","ko":"인천공항1터미널","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"機場鐵路","id":"A12","zh":"仁川國際機場2航廈","en":"Incheon Int'l Airport Terminal 2","ko":"인천공항2터미널","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I110","zh":"桂陽","en":"Gyeyang","ko":"계양","transfers":"機場鐵路（水藍色）","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I111","zh":"橘陽","en":"Gyulhyeon","ko":"귤현","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I112","zh":"朴村","en":"Bakchon","ko":"박촌","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I113","zh":"林鶴","en":"Imhak","ko":"임학","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I114","zh":"計算","en":"Gyesan","ko":"계산","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I115","zh":"京仁教大前","en":"Gyeongin Nat'l Univ. of Education","ko":"경인교대입구","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I116","zh":"鵲戰","en":"Jakjeon","ko":"작전","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I117","zh":"葛山","en":"Galsan","ko":"갈산","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I118","zh":"富平區廳","en":"Bupyeong-gu Office","ko":"부평구청","transfers":"7號線（橄欖綠）","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I119","zh":"富平市場","en":"Bupyeong Market","ko":"부평시장","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I120","zh":"富平","en":"Bupyeong","ko":"부평","transfers":"1號線（深藍色）","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I121","zh":"東樹","en":"Dongsu","ko":"동수","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I122","zh":"富平三街","en":"Bupyeong-samgeori","ko":"부평삼거리","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I123","zh":"間石五街","en":"Ganseok-ogwori","ko":"간석오거리","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I124","zh":"仁川市廳","en":"Incheon City Hall","ko":"인천시청","transfers":"仁川2號線（橘黃色）","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I125","zh":"藝術中心","en":"Arts Center","ko":"예術會館","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I126","zh":"仁川客運站","en":"Incheon Bus Terminal","ko":"인천터미널","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I127","zh":"文鶴競技場","en":"Munhak Sports Complex","ko":"문학경기장","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I128","zh":"仙鶴","en":"Seonhak","ko":"선학","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I129","zh":"新延","en":"Sinyeon","ko":"신연","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I130","zh":"源仁齋","en":"Woninjae","ko":"원인재","transfers":"水仁·盆唐線（黃色）","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I131","zh":"東春","en":"Dongchun","ko":"동춘","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I132","zh":"東幕","en":"Dongmak","ko":"동막","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I133","zh":"校園城","en":"Campus Town","ko":"캠퍼스타운","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I134","zh":"科技園區","en":"Techno Park","ko":"테크노파크","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I135","zh":"知識情報園區","en":"BIT Zone","ko":"지식정보단지","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I136","zh":"仁川大入口","en":"Incheon Nat'l Univ.","ko":"인천대입구","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I137","zh":"中央公園","en":"Central Park","ko":"센트럴파크","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I138","zh":"國際業務地區","en":"Int'l Business District","ko":"국제업務지구","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵1號線","id":"I139","zh":"松島月光慶典公園","en":"Songdo Moonlight Festival Park","ko":"송道달빛축제공원","transfers":"無","lineColor":"#009cd6"},
+        {"lineName":"仁川地鐵2號線","id":"I201","zh":"黔丹梧柳","en":"Geomdan Oryu","ko":"검단오류","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I202","zh":"旺吉","en":"Wanggil","ko":"왕길","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I203","zh":"黔丹十字路口","en":"Geomdan Sageori","ko":"검단사거리","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I204","zh":"麻田","en":"Majeon","ko":"마전","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I205","zh":"完井","en":"Wanjeong","ko":"완정","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I206","zh":"篤亭","en":"Dokjeong","ko":"독정","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I207","zh":"黔岩","en":"Geomam","ko":"검암","transfers":"機場鐵路（水藍色）","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I208","zh":"黔巴威","en":"Geombawi","ko":"검바위","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I209","zh":"亞運會賽場","en":"Asiad Stadium","ko":"아시아드경기장","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I210","zh":"西區廳","en":"Seogu Office","ko":"서구청","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I211","zh":"佳亭","en":"Gajeong","ko":"가정","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I212","zh":"佳亭中央市場","en":"Gajeong Jungang Market","ko":"가정중앙시장","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I213","zh":"西部女性會館","en":"Seobu Woman's Community Center","ko":"서부여성회관","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I214","zh":"石南","en":"Seoknam","ko":"석남","transfers":"7號線（橄欖綠）","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I215","zh":"佳佐","en":"Gajwa","ko":"가좌","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I216","zh":"佳才耳","en":"Gajaeul","ko":"가재울","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I217","zh":"朱安國家產團","en":"Juan National Industrial Complex","ko":"주안국가산단","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I218","zh":"朱安","en":"Juan","ko":"주안","transfers":"1號線（深藍色）","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I219","zh":"市民公園","en":"Citizens Park","ko":"시민공원","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I220","zh":"石岩市場","en":"Seokbawi Market","ko":"석바위시장","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I221","zh":"仁川市廳","en":"Incheon City Hall","ko":"인천시청","transfers":"仁川1號線（天藍色）","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I222","zh":"石川十字路口","en":"Seokcheon Sageori","ko":"석천사거리","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I223","zh":"沙萊內市場","en":"Moraenae Market","ko":"모래내시장","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I224","zh":"萬壽","en":"Mansu","ko":"만수","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I225","zh":"南洞區廳","en":"Namdong-gu Office","ko":"남동구청","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I226","zh":"仁川大公園","en":"Incheon Grand Park","ko":"인천대공원","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"仁川地鐵2號線","id":"I227","zh":"雲宴","en":"Unyeon","ko":"운연","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U110","zh":"鉢谷","en":"Balgok","ko":"발곡","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U111","zh":"回龍","en":"Hoeryong","ko":"회룡","transfers":"1號線（深藍色）","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U112","zh":"輕電鐵議政府LRT","en":"Uijeongbu","ko":"경전철의정부","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U113","zh":"議政府市廳","en":"Uijeongbu City Hall","ko":"의정부시청","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U114","zh":"興宣","en":"Heungseon","ko":"흥선","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U115","zh":"中央","en":"Jungang","ko":"중앙","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U116","zh":"東梧","en":"Dong-o","ko":"동오","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U117","zh":"新谷","en":"Singok","ko":"신곡","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U118","zh":"京畿道廳北部廳舍","en":"Gyeonggi-do Government Office North","ko":"경기도청북부청사","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U119","zh":"孝子","en":"Hyoja","ko":"효자","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U120","zh":"昆弟","en":"Gonje","ko":"곤제","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U121","zh":"魚龍","en":"Eoryong","ko":"어룡","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U122","zh":"松山","en":"Songsan","ko":"송산","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U123","zh":"塔石","en":"Tapseok","ko":"탑석","transfers":"無","lineColor":"#ff9d00"},
+        {"lineName":"議政府輕電鐵","id":"U125","zh":"高山","en":"Gosan","ko":"고산","transfers":"無","lineColor":"#ff9d00"},
         {"lineName":"京春線","id":"K117","zh":"清涼里","en":"Cheongnyangni","ko":"청량리","transfers":"1號線（深藍色）、京義中央線（湖水綠）、水仁·盆唐線（黃色）","lineColor":"#00b594"},
         {"lineName":"京春線","id":"K118","zh":"回基","en":"Hoegi","ko":"회기","transfers":"1號線（深藍色）、京義中央線（湖水綠）","lineColor":"#00b594"},
-        {"lineName":"京春線","id":"K121","zh":"光云大","en":"Kwangwoon Univ.","ko":"광운대","transfers":"1號線（深藍色） *僅部分班次行駛至此","lineColor":"#00b594"},
+        {"lineName":"京春線","id":"K121","zh":"光云大","en":"Kwangwoon Univ.","ko":"광운대","transfers":"1號線（深藍色）","lineColor":"#00b594"},
         {"lineName":"京春線","id":"P116","zh":"中浪","en":"Jungnang","ko":"중랑","transfers":"京義中央線（湖水綠）","lineColor":"#00b594"},
         {"lineName":"京春線","id":"P117","zh":"上鳳","en":"Sangbong","ko":"상봉","transfers":"7號線（橄欖綠）、京義中央線（湖水綠）","lineColor":"#00b594"},
         {"lineName":"京春線","id":"P118","zh":"忘憂","en":"Mangu","ko":"망우","transfers":"京義中央線（湖水綠）","lineColor":"#00b594"},
@@ -850,12 +964,37 @@
         {"lineName":"京春線","id":"P134","zh":"江村","en":"Gangchon","ko":"강촌","transfers":"江村鐵道自行車轉乘點","lineColor":"#00b594"},
         {"lineName":"京春線","id":"P135","zh":"金裕貞","en":"Gimyujeong","ko":"김유정","transfers":"金裕貞鐵道自行車起點","lineColor":"#00b594"},
         {"lineName":"京春線","id":"P136","zh":"南春川","en":"Namchuncheon","ko":"남춘천","transfers":"無","lineColor":"#00b594"},
-        {"lineName":"京春線","id":"P137","zh":"春川","en":"Chunchon","ko":"춘천","transfers":"終點站","lineColor":"#00b594"}
+        {"lineName":"京春線","id":"P137","zh":"春川","en":"Chuncheon","ko":"춘천","transfers":"終點站","lineColor":"#00b594"},
+        {"lineName":"京江線","id":"K410","zh":"板橋","en":"Pangyo","ko":"판교","transfers":"新盆唐線（紅色）","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K411","zh":"二梅","en":"Imae","ko":"이매","transfers":"水仁·盆唐線（黃色）","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K412","zh":"三洞","en":"Samdong","ko":"삼동","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K413","zh":"京畿廣州","en":"Gyeonggi Gwangju","ko":"경기광주","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K414","zh":"草月","en":"Chowol","ko":"초월","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K415","zh":"昆池岩","en":"Gonjiam","ko":"곤지암","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K416","zh":"新屯陶藝村","en":"Sindundoyechon","ko":"신둔도예촌","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K417","zh":"利川","en":"Icheon","ko":"이천","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K418","zh":"夫鉢","en":"Bubal","ko":"부발","transfers":"中部內陸線 KTX","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K419","zh":"世宗大王陵","en":"Sejongdaewangneung","ko":"세종대왕릉","transfers":"無","lineColor":"#003da5"},
+        {"lineName":"京江線","id":"K420","zh":"驪州","en":"Yeoju","ko":"여주","transfers":"終點站","lineColor":"#003da5"},
+        {"lineName":"龍仁輕軌","id":"Y110","zh":"器興","en":"Giheung","ko":"기흥","transfers":"水仁·盆唐線（黃色）","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y111","zh":"白南準藝術中心","en":"Kangnam Univ.","ko":"강남대","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y112","zh":"支石","en":"Jiseok","ko":"지석","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y113","zh":"御井","en":"Eojeong","ko":"어정","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y114","zh":"東栢","en":"Dongbaek","ko":"동백","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y115","zh":"草堂","en":"Chodang","ko":"초당","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y116","zh":"三街","en":"Samga","ko":"삼가","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y117","zh":"市廳·龍仁大","en":"City Hall·Yongin Univ.","ko":"시청·용인대","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y118","zh":"明知大","en":"Myongji Univ.","ko":"명지대","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y119","zh":"金良場","en":"Gimnyangjang","ko":"김량장","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y120","zh":"運動場·松潭大","en":"Stadium·Songdam College","ko":"운동장·송담대","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y121","zh":"古陳","en":"Gojin","ko":"고진","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y122","zh":"麻坪","en":"Bopyeong","ko":"보평","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y123","zh":"屯田","en":"Dunjeon","ko":"둔전","transfers":"無","lineColor":"#b7ec59"},
+        {"lineName":"龍仁輕軌","id":"Y124","zh":"前垈·愛寶樂園","en":"Jeondae·Everland","ko":"전대·에버랜드","transfers":"愛寶樂園接駁點","lineColor":"#b7ec59"}
     ];
 
-    // 2. 釜山地鐵精準配色完整數據
-    const busanData = [
-        /* 1號線 */
+    // 2. 釜山完整原始數據庫
+    const rawBusanData = [
         {"lineName":"1號線","id":"101","zh":"多大浦海水浴場","en":"Dadaepo Beach","ko":"다대포해수욕장","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"102","zh":"多大浦港","en":"Dadaepo Harbor","ko":"다대포항","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"103","zh":"納漑","en":"Natgae","ko":"낫개","transfers":"無","lineColor":"#FFA500"},
@@ -896,8 +1035,6 @@
         {"lineName":"1號線","id":"138","zh":"南山","en":"Namsan","ko":"남산","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"139","zh":"梵魚寺","en":"Beomeosa","ko":"범어사","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"140","zh":"老圃","en":"Nopo","ko":"노포","transfers":"無","lineColor":"#FFA500"},
-
-        /* 2號線 */
         {"lineName":"2號線","id":"201","zh":"萇山","en":"Jangsan","ko":"장산","transfers":"無","lineColor":"#008000"},
         {"lineName":"2號線","id":"202","zh":"中洞","en":"Jung-dong","ko":"중동","transfers":"無","lineColor":"#008000"},
         {"lineName":"2號線","id":"203","zh":"海雲臺","en":"Haeundae","ko":"해운대","transfers":"無","lineColor":"#008000"},
@@ -941,8 +1078,6 @@
         {"lineName":"2號線","id":"241","zh":"釜山大學梁山分校","en":"Pusan Nat'l Univ. Yangsan Campus","ko":"부산대양산캠퍼스","transfers":"無","lineColor":"#008000"},
         {"lineName":"2號線","id":"242","zh":"南梁山","en":"Namyangsan","ko":"남양산","transfers":"無","lineColor":"#008000"},
         {"lineName":"2號線","id":"243","zh":"梁山","en":"Yangsan","ko":"양산","transfers":"無","lineColor":"#008000"},
-
-        /* 3號線 */
         {"lineName":"3號線","id":"301","zh":"水營","en":"Suyeong","ko":"수영","transfers":"2號線（綠色）","lineColor":"#8B4513"},
         {"lineName":"3號線","id":"302","zh":"望美","en":"Mangmi","ko":"망미","transfers":"無","lineColor":"#8B4513"},
         {"lineName":"3號線","id":"303","zh":"盃山","en":"Baesan","ko":"배산","transfers":"無","lineColor":"#8B4513"},
@@ -960,8 +1095,6 @@
         {"lineName":"3號線","id":"315","zh":"江西區廳","en":"Gangseo-gu Office","ko":"강서구청","transfers":"無","lineColor":"#8B4513"},
         {"lineName":"3號線","id":"316","zh":"體育公園","en":"Sports Park","ko":"체육공원","transfers":"無","lineColor":"#8B4513"},
         {"lineName":"3號線","id":"317","zh":"大渚","en":"Daejeo","ko":"대저","transfers":"金海輕軌（紫色）","lineColor":"#8B4513"},
-
-        /* 4號線 */
         {"lineName":"4號線","id":"401","zh":"美南","en":"Minam","ko":"미남","transfers":"3號線（棕色）","lineColor":"#6A5ACD"},
         {"lineName":"4號線","id":"402","zh":"東萊","en":"Dongnae","ko":"동래","transfers":"1號線（橘色）","lineColor":"#6A5ACD"},
         {"lineName":"4號線","id":"403","zh":"壽安","en":"Suan","ko":"수안","transfers":"無","lineColor":"#6A5ACD"},
@@ -976,8 +1109,6 @@
         {"lineName":"4號線","id":"412","zh":"上盤松","en":"Witbansong","ko":"윗반송","transfers":"無","lineColor":"#6A5ACD"},
         {"lineName":"4號線","id":"413","zh":"古村","en":"Gochon","ko":"고촌","transfers":"無","lineColor":"#6A5ACD"},
         {"lineName":"4號線","id":"414","zh":"安平","en":"Anpyeong","ko":"안평","transfers":"無","lineColor":"#6A5ACD"},
-
-        /* 東海線 */
         {"lineName":"東海廣域電鐵","id":"K110","zh":"釜田","en":"Bujeon","ko":"부전","transfers":"1號線（橘色，需出站換乘）","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K111","zh":"巨堤迎日","en":"Geojehaemaji","ko":"거제해맞이","transfers":"無","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K112","zh":"巨堤","en":"Geoje","ko":"거제","transfers":"3號線（棕色）","lineColor":"#1E90FF"},
@@ -997,14 +1128,12 @@
         {"lineName":"東海廣域電鐵","id":"K126","zh":"月內","en":"Wollae","ko":"월내","transfers":"無","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K127","zh":"西生","en":"Seosaeng","ko":"서생","transfers":"無","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K128","zh":"南昌","en":"Namchang","ko":"남창","transfers":"無","lineColor":"#1E90FF"},
-        {"lineName":"東海廣域電鐵","id":"K129","zh":"望陽","en":"Mangyang","ko":"mangyang","transfers":"無","lineColor":"#1E90FF"},
+        {"lineName":"東海廣域電鐵","id":"K129","zh":"望陽","en":"Mangyang","ko":"망양","transfers":"無","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K130","zh":"德下","en":"Deokha","ko":"덕하","transfers":"無","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K131","zh":"開雲浦","en":"Gaeunpo","ko":"개운포","transfers":"無","lineColor":"#1E90FF"},
         {"lineName":"東海廣域電鐵","id":"K132","zh":"太和江","en":"Taehwagang","ko":"태화강","transfers":"無","lineColor":"#1E90FF"},
-
-        /* 金海輕軌 */
         {"lineName":"金海輕軌","id":"1","zh":"沙上","en":"Sasang","ko":"사상","transfers":"2號線（綠色）","lineColor":"#800080"},
-        {"lineName":"金海輕軌","id":"2","zh":"掛法","en":"Gwaebeop Renecite","ko":"괘법르네시떼","transfers":"無","lineColor":"#800080"},
+        {"lineName":"金海輕軌","id":"2","zh":"掛法Renecite","en":"Gwaebeop Renecite","ko":"괘법르네시떼","transfers":"無","lineColor":"#800080"},
         {"lineName":"金海輕軌","id":"3","zh":"西釜山流通地區","en":"Seobusan Yutongjigu","ko":"서부산유통지구","transfers":"無","lineColor":"#800080"},
         {"lineName":"金海輕軌","id":"4","zh":"機場","en":"Gimhae International Airport","ko":"공항","transfers":"無","lineColor":"#800080"},
         {"lineName":"金海輕軌","id":"5","zh":"德斗","en":"Deokdu","ko":"덕두","transfers":"無","lineColor":"#800080"},
@@ -1023,59 +1152,137 @@
         {"lineName":"金海輕軌","id":"18","zh":"博物館","en":"Gimhae National Museum","ko":"박물관","transfers":"無","lineColor":"#800080"},
         {"lineName":"金海輕軌","id":"19","zh":"蓮池公園","en":"Yeonji Park","ko":"연지공원","transfers":"無","lineColor":"#800080"},
         {"lineName":"金海輕軌","id":"20","zh":"長神大","en":"Presbyterian Univ.","ko":"장신대","transfers":"無","lineColor":"#800080"},
-        {"lineName":"金海輕軌","id":"21","zh":"加雅大","en":"Gaya Univ.","ko":"가야대","transfers":"無","lineColor":"#800080"}
+        {"lineName":"金海輕軌","id":"21","zh":"加耶大","en":"Gaya Univ.","ko":"가야대","transfers":"無","lineColor":"#800080"}
     ];
+
+    // 🧠 核心重組引擎：跨線路同名大站完美歸組
+    function processSubwayData(rawArray) {
+        const mergedMap = new Map();
+        
+        rawArray.forEach(item => {
+            const key = item.zh.trim();
+            if (!mergedMap.has(key)) {
+                mergedMap.set(key, {
+                    zh: key,
+                    en: item.en,
+                    ko: item.ko,
+                    lines: [],
+                    allTransfers: new Set()
+                });
+            }
+            
+            const stationGroup = mergedMap.get(key);
+            stationGroup.lines.push({
+                name: item.lineName,
+                color: item.lineColor,
+                id: item.id
+            });
+            
+            if (item.transfers && item.transfers !== "無") {
+                const parts = item.transfers.split(/[、，]/);
+                parts.forEach(p => stationGroup.allTransfers.add(p.trim()));
+            }
+        });
+        
+        return Array.from(mergedMap.values());
+    }
+
+    // 預先編譯雙城龐大數據，提升查詢流暢度
+    const seoulData = processSubwayData(rawSeoulData);
+    const busanData = processSubwayData(rawBusanData);
 
     let currentCity = 'seoul';
     let subwayData = [...seoulData];
 
+    // 城市切換控制
     function switchCity(city) {
         currentCity = city;
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btn-seoul').classList.remove('active');
+        document.getElementById('btn-busan').classList.remove('active');
         document.getElementById('searchInput').value = '';
 
         if (city === 'seoul') {
             subwayData = [...seoulData];
             document.getElementById('cityStatus').innerText = '目前城市：首爾地鐵';
-            window.event.target.classList.add('active');
+            document.getElementById('btn-seoul').classList.add('active');
         } else if (city === 'busan') {
             subwayData = [...busanData];
             document.getElementById('cityStatus').innerText = '目前城市：釜山地鐵';
-            window.event.target.classList.add('active');
+            document.getElementById('btn-busan').classList.add('active');
         }
 
         renderStations(subwayData);
+        renderHistory();
     }
 
-    // 🎨 解析轉乘文字，並將其自動組裝為官方色彩高亮標籤的函數
-    function generateTransferBadges(transferText) {
-        if (!transferText || transferText === "無") return "";
+    // 🔄 換乘彩色 Badge 動態解析器
+    function generateTransferBadges(transferSet) {
+        if (!transferSet || transferSet.size === 0) return "";
         
-        const lines = transferText.split(/[、，]/);
         let html = '<div class="transfer-section"><span class="transfer-title">🔄 轉乘：</span>';
-        
-        lines.forEach(line => {
-            let matchedColor = "#475569"; // 預設暗灰色
-            
+        transferSet.forEach(line => {
+            let matchedColor = "#475569"; 
             for (let colorName in colorPalette) {
                 if (line.includes(colorName)) {
                     matchedColor = colorPalette[colorName];
                     break;
                 }
             }
-            html += `<span class="line-badge" style="background-color: ${matchedColor}; font-size: 10px; padding: 1px 5px; margin-right: 3px;">${line.trim()}</span>`;
+            html += `<span class="transfer-badge" style="background-color: ${matchedColor};">${line}</span>`;
         });
-        
         html += '</div>';
         return html;
     }
 
+    // 📋 點擊複製與 LocalStorage 歷史儲存器
+    function handleCardClick(zhName, koName) {
+        // 1. 複製韓文
+        navigator.clipboard.writeText(koName).then(() => {
+            const toast = document.getElementById('toast');
+            toast.innerText = `📋 已複製「${koName}」，可直接貼進地圖！`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        });
+
+        // 2. 存入歷史紀錄 (上限 4 個，不重複)
+        let history = JSON.parse(localStorage.getItem(`history_${currentCity}`)) || [];
+        history = history.filter(item => item.zh !== zhName);
+        history.unshift({ zh: zhName, ko: koName });
+        if (history.length > 4) history.pop();
+        localStorage.setItem(`history_${currentCity}`, JSON.stringify(history));
+        
+        renderHistory();
+    }
+
+    // ⏰ 歷史快選按鈕渲染
+    function renderHistory() {
+        const historySection = document.getElementById('historySection');
+        const history = JSON.parse(localStorage.getItem(`history_${currentCity}`)) || [];
+        
+        if (history.length === 0) {
+            historySection.innerHTML = '<span class="history-title">最近查過：</span><span style="color:var(--text-sub); font-style:italic;">暫無歷史紀錄</span>';
+            return;
+        }
+
+        let html = '<span class="history-title">最近查過：</span>';
+        history.forEach(item => {
+            html += `<span class="history-tag" onclick="quickSearch('${item.zh}')">${item.zh}</span>`;
+        });
+        historySection.innerHTML = html;
+    }
+
+    function quickSearch(name) {
+        document.getElementById('searchInput').value = name;
+        filterStations();
+    }
+
+    // 🖥️ UI 列表渲染核心
     function renderStations(data) {
         const listContainer = document.getElementById('stationList');
         const countContainer = document.getElementById('resultCount');
         listContainer.innerHTML = '';
         
-        countContainer.innerText = `共 ${data.length} 個站點`;
+        countContainer.innerText = `共 ${data.length} 個綜合車站`;
 
         if (data.length === 0) {
             listContainer.innerHTML = '<div class="no-result">沒有找到符合條件的站點 🔍</div>';
@@ -1085,42 +1292,61 @@
         data.forEach(station => {
             const card = document.createElement('div');
             card.className = 'station-card';
+            card.onclick = () => handleCardClick(station.zh, station.ko);
             
-            // 讀取你設定的精確十六進制 lineColor
-            const mainLineColor = station.lineColor || "#475569";
-            const lineBadgeHtml = `<span class="line-badge" style="background-color: ${mainLineColor};">${station.lineName}</span>`;
+            let linesHtml = "";
+            station.lines.forEach(line => {
+                linesHtml += `
+                    <span class="line-pill" style="background-color: ${line.color};">
+                        <span style="font-size:9px; background:rgba(0,0,0,0.2); padding:1px 4px; border-radius:3px;">${line.id}</span>
+                        ${line.name}
+                    </span>
+                `;
+            });
             
-            // 生成換乘區塊
-            const transferHtml = generateTransferBadges(station.transfers);
+            // 智慧清洗：過濾掉已包含在卡片內部主線中的重複轉乘資訊
+            const cleanTransfers = new Set();
+            station.allTransfers.forEach(t => {
+                const isMainLine = station.lines.some(l => t.includes(l.name));
+                if (!isMainLine) cleanTransfers.add(t);
+            });
+
+            const transferHtml = generateTransferBadges(cleanTransfers);
 
             card.innerHTML = `
                 <div class="station-info">
                     <div class="meta-info">
-                        <span class="code-info">[${station.id}]</span>
                         <span class="zh-name">${station.zh}</span>
-                        ${lineBadgeHtml}
+                        ${linesHtml}
                     </div>
                     <div class="en-name">${station.en}</div>
                     ${transferHtml}
                 </div>
-                <div class="ko-name">${station.ko}</div>
+                <div class="ko-box">
+                    <div class="ko-name">${station.ko}</div>
+                    <span class="copy-hint">點擊複製 📋</span>
+                </div>
             `;
             listContainer.appendChild(card);
         });
     }
 
+    // 🔍 四合一模糊搜尋
     function filterStations() {
         const query = document.getElementById('searchInput').value.toLowerCase().trim();
         const filtered = subwayData.filter(station => {
+            const matchId = station.lines.some(l => l.id.toLowerCase().includes(query));
             return station.zh.toLowerCase().includes(query) || 
                    station.en.toLowerCase().includes(query) ||
-                   station.id.toLowerCase().includes(query); // 額外支援用地鐵代號/編號搜尋
+                   station.ko.toLowerCase().includes(query) ||
+                   matchId;
         });
         renderStations(filtered);
     }
 
-    // 初始化載入首爾
+    // 🚀 初始化系統啟動
     renderStations(subwayData);
+    renderHistory();
 </script>
 
 </body>
