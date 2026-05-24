@@ -1236,37 +1236,54 @@
         {"lineName":"金海輕軌","id":"21","zh":"加耶大","en":"Gaya Univ.","ko":"가야대","transfers":"無","lineColor":"#800080"}
     ];
 
-    // 🧠 智慧大站合併引擎：自動處理跨線同名站點
-    function processSubwayData(rawArray) {
-        const mergedMap = new Map();
-        
-        rawArray.forEach(item => {
-            const key = item.zh.trim();
-            if (!mergedMap.has(key)) {
-                mergedMap.set(key, {
-                    zh: key,
-                    en: item.en,
-                    ko: item.ko,
-                    lines: [],
-                    allTransfers: new Set()
-                });
-            }
-            
-            const stationGroup = mergedMap.get(key);
-            stationGroup.lines.push({
-                name: item.lineName,
-                color: item.lineColor,
-                id: item.id
+  // 🧠 智慧大站合併 + 自動前後站偵測引擎
+function processSubwayData(rawArray) {
+    const mergedMap = new Map();
+    
+    // 💡 先將所有車站依路線名稱分組，方便精準定位前後站
+    const linesGroup = {};
+    rawArray.forEach(item => {
+        if (!linesGroup[item.lineName]) linesGroup[item.lineName] = [];
+        linesGroup[item.lineName].push(item);
+    });
+
+    rawArray.forEach(item => {
+        const key = item.zh.trim();
+        if (!mergedMap.has(key)) {
+            mergedMap.set(key, {
+                zh: key,
+                en: item.en,
+                ko: item.ko,
+                lines: [],
+                allTransfers: new Set()
             });
-            
-            if (item.transfers && item.transfers !== "無") {
-                const parts = item.transfers.split(/[、，]/);
-                parts.forEach(p => stationGroup.allTransfers.add(p.trim()));
-            }
+        }
+        
+        const stationGroup = mergedMap.get(key);
+        
+        // 🔍 精確抓取當前車站在該路線中的上下游鄰居
+        const currentLineList = linesGroup[item.lineName];
+        const idx = currentLineList.findIndex(s => s.id === item.id);
+        const prevStation = idx > 0 ? currentLineList[idx - 1].zh : "起點站";
+        const nextStation = idx < currentLineList.length - 1 ? currentLineList[idx + 1].zh : "終點站";
+
+        // 將鄰居資訊一起封裝進線路標籤中
+        stationGroup.lines.push({
+            name: item.lineName,
+            color: item.lineColor,
+            id: item.id,
+            prev: prevStation,
+            next: nextStation
         });
         
-        return Array.from(mergedMap.values());
-    }
+        if (item.transfers && item.transfers !== "無") {
+            const parts = item.transfers.split(/[、，]/);
+            parts.forEach(p => stationGroup.allTransfers.add(p.trim()));
+        }
+    });
+    
+    return Array.from(mergedMap.values());
+}
 
     // 數據預編譯
     const seoulData = processSubwayData(rawSeoulData);
@@ -1394,59 +1411,65 @@
         filterStations();
     }
 
-    // 🖥️ 車站列表主卡片渲染機制
-    function renderStations(data) {
-        const listContainer = document.getElementById('stationList');
-        const countContainer = document.getElementById('resultCount');
-        listContainer.innerHTML = '';
+// 🖥️ 車站列表主卡片渲染機制 (含前後站智慧導航版)
+function renderStations(data) {
+    const listContainer = document.getElementById('stationList');
+    const countContainer = document.getElementById('resultCount');
+    listContainer.innerHTML = '';
+    
+    countContainer.innerText = `共 ${data.length} 個綜合大站`;
+
+    if (data.length === 0) {
+        listContainer.innerHTML = '<div class="no-result">沒有找到符合條件的站點 🔍</div>';
+        return;
+    }
+
+    data.forEach(station => {
+        const card = document.createElement('div');
+        card.className = 'station-card';
+        card.onclick = () => handleCardClick(station.zh, station.ko);
         
-        countContainer.innerText = `共 ${data.length} 個綜合大站`;
-
-        if (data.length === 0) {
-            listContainer.innerHTML = '<div class="no-result">沒有找到符合條件的站點 🔍</div>';
-            return;
-        }
-
-        data.forEach(station => {
-            const card = document.createElement('div');
-            card.className = 'station-card';
-            card.onclick = () => handleCardClick(station.zh, station.ko);
-            
-            let linesHtml = "";
-            station.lines.forEach(line => {
-                linesHtml += `
-                    <span class="line-pill" style="background-color: ${line.color};">
+        // 💡 核心改動：動態將前後站輸出至線路標籤右側
+        let linesHtml = "";
+        station.lines.forEach(line => {
+            linesHtml += `
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
+                    <span class="line-pill" style="background-color: ${line.color}; margin: 0;">
                         <span style="font-size:9px; background:rgba(0,0,0,0.2); padding:1px 4px; border-radius:3px;">${line.id}</span>
                         ${line.name}
                     </span>
-                `;
-            });
-            
-            const cleanTransfers = new Set();
-            station.allTransfers.forEach(t => {
-                const isMainLine = station.lines.some(l => t.includes(l.name));
-                if (!isMainLine) cleanTransfers.add(t);
-            });
-
-            const transferHtml = generateTransferBadges(cleanTransfers);
-
-            card.innerHTML = `
-                <div class="station-info">
-                    <div class="meta-info">
-                        <span class="zh-name">${station.zh}</span>
-                        ${linesHtml}
-                    </div>
-                    <div class="en-name">${station.en}</div>
-                    ${transferHtml}
-                </div>
-                <div class="ko-box">
-                    <div class="ko-name">${station.ko}</div>
-                    <span class="copy-hint">點擊複製 📋</span>
+                    <span style="font-size: 11px; color: var(--text-sub); display: inline-flex; align-items: center; gap: 2px; opacity: 0.85;">
+                        (${line.prev} ➡️ <b>${station.zh}</b> ➡️ ${line.next})
+                    </span>
                 </div>
             `;
-            listContainer.appendChild(card);
         });
-    }
+        
+        const cleanTransfers = new Set();
+        station.allTransfers.forEach(t => {
+            const isMainLine = station.lines.some(l => t.includes(l.name));
+            if (!isMainLine) cleanTransfers.add(t);
+        });
+
+        const transferHtml = generateTransferBadges(cleanTransfers);
+
+        card.innerHTML = `
+            <div class="station-info" style="width: 70%;">
+                <div class="meta-info" style="display:block;">
+                    <span class="zh-name" style="display:block; margin-bottom: 2px;">${station.zh}</span>
+                    ${linesHtml}
+                </div>
+                <div class="en-name" style="margin-top: 6px;">${station.en}</div>
+                ${transferHtml}
+            </div>
+            <div class="ko-box" style="width: 30%;">
+                <div class="ko-name">${station.ko}</div>
+                <span class="copy-hint">點擊複製 📋</span>
+            </div>
+        `;
+        listContainer.appendChild(card);
+    });
+}
 
     // 🔍 四合一智慧快搜
     function filterStations() {
