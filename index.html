@@ -195,32 +195,25 @@
             overflow-y: auto;
             margin-top: 10px;
         }
+        /* 📦 卡片基礎樣式：預設不開啟手勢游標 */
         .station-card {
-            background: var(--container-bg);
+　　　　　　　background: var(--container-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 16px 18px;
+            padding: 18px;
             margin-bottom: 12px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            flex-direction: column;
+            gap: 12px;
+            cursor: default;
         }
         .station-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
             border-color: var(--border-hover);
-        }
-        .station-info {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 65%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
         .zh-name {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 1９px;
+            font-weight: 800;
             color: var(--text-main);
         }
         .en-name {
