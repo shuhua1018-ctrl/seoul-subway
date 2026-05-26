@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>韓國地鐵即時查詢系統 v2.0</title>
+    <title>韓國地鐵即時查詢系統 v3.0</title>
     <style>
         :root {
             --bg-color: #f0f4f8;
@@ -17,7 +17,7 @@
             --ko-text: #1e40af;
         }
 
-        /* 🌙 完美支援手機/電腦深色模式 (Dark Mode) */
+        /* 🌙 支援手機與電腦深色模式 (Dark Mode) */
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #0f172a;
@@ -43,7 +43,7 @@
         }
         .container {
             width: 100%;
-            max-width: 720px;
+            max-width: 750px;
             background: var(--container-bg);
             padding: 30px;
             border-radius: 16px;
@@ -139,9 +139,6 @@
         .map-link:hover {
             text-decoration: underline;
         }
-        .map-img-wrapper {
-            background: #ffffff;
-        }
 
         /* ⏱️ 歷史紀錄快選區 */
         .history-section {
@@ -195,44 +192,27 @@
             overflow-y: auto;
             margin-top: 10px;
         }
+        
         .station-card {
             background: var(--container-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 16px 18px;
+            padding: 18px;
             margin-bottom: 12px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            flex-direction: column;
+            gap: 12px;
+            cursor: default;
         }
         .station-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
             border-color: var(--border-hover);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
-        .station-info {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 65%;
-        }
+        
         .zh-name {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 19px;
+            font-weight: 800;
             color: var(--text-main);
-        }
-        .en-name {
-            font-size: 12px;
-            color: var(--text-sub);
-            margin-top: 2px;
-        }
-        .meta-info {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            flex-wrap: wrap;
         }
         
         .line-pill {
@@ -243,17 +223,60 @@
             font-weight: bold;
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+        }
+        
+        .adjacent-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+        .adjacent-line-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .adjacent-nav-text {
+            font-size: 14.5px; 
+            color: var(--text-sub);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .adjacent-link {
+            color: #3b82f6;
+            cursor: pointer; 
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .adjacent-link:hover {
+            text-decoration: underline;
+            color: #2563eb;
+        }
+        .adjacent-disabled {
+            color: var(--text-sub);
+            opacity: 0.5;
+            font-style: italic;
+        }
+        .curr-highlight {
+            color: var(--text-main);
+            font-weight: 800;
         }
         
         .transfer-section {
             display: flex;
             align-items: center;
             gap: 4px;
-            margin-top: 4px;
+            margin-top: 6px;
             font-size: 11px;
             color: var(--text-sub);
             flex-wrap: wrap;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 6px;
         }
         .transfer-title {
             color: var(--text-sub);
@@ -272,7 +295,6 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 4px;
-            width: 35%;
         }
         .ko-name {
             font-size: 19px;
@@ -285,10 +307,17 @@
             text-align: right;
             box-sizing: border-box;
             max-width: 100%;
+            cursor: pointer; 
+            transition: transform 0.1s ease;
+        }
+        .ko-name:hover {
+            transform: scale(1.04);
+            filter: brightness(0.95);
         }
         .copy-hint {
             font-size: 10px;
             color: var(--text-sub);
+            opacity: 0.7;
         }
         
         .toast {
@@ -323,8 +352,8 @@
 <body>
 
 <div class="container">
-    <h1>🇰🇷 韓國地鐵即時查詢系統 v2.0</h1>
-    <div class="subtitle">雙城全量數據支援 · 大站智慧合併 · 點擊複製韓文站名</div>
+    <h1>🇰🇷 韓國地鐵即時查詢系統 v3.0</h1>
+    <div class="subtitle">雙城全量數據支援 · 上下站智慧跳轉超連結</div>
     
     <div class="city-tabs">
         <button class="tab-btn active" id="btn-seoul" onclick="switchCity('seoul')">誠信首爾 (Seoul)</button>
@@ -372,22 +401,18 @@
         "綠黃色": "#b7ec59"
     };
 
-    // 🗺️ 雙城本地檔案地圖源設定 (與您的 GitHub 檔案名稱完美錨定)
+    // 🗺️ 雙城本地檔案地圖源設定
     const cityMaps = {
-        seoul: {
-            title: "🗺️ 首爾首都圈電鐵路網圖 (PDF 電子檔)",
-            type: "pdf",
-            url: "seoul_map.pdf"
-        },
-        busan: {
-            title: "🗺️ 釜山都市鐵道路網圖 (PNG 圖片檔)",
-            type: "image",
-            url: "busan_map.png"
-        }
+        seoul: { title: "🗺️ 首爾首都圈電鐵路網圖 (PDF 電子檔)", type: "pdf", url: "seoul_map.pdf" },
+        busan: { title: "🗺️ 釜山都市鐵道路網圖 (PNG 圖片檔)", type: "image", url: "busan_map.png" }
     };
 
-    // 1. 首爾完整原始數據庫
+    // ==========================================
+    // ➊ 📥 首爾原始數據庫 (請在下方中括號內貼上您的首爾全數據)
+    // ==========================================
     const rawSeoulData = [
+        // 👈 請在此處貼上首爾資料，格式如下：
+        // {"lineName":"1號線","id":"101","zh":"逍遙山","en":"Soyosan","ko":"소요산","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"101","zh":"逍遙山","en":"Soyosan","ko":"소요산","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"102","zh":"東豆川","en":"Dongducheon","ko":"동두천","transfers":"無","lineColor":"#003da5"},
         {"lineName":"1號線","id":"103","zh":"保山","en":"Bosan","ko":"보산","transfers":"無","lineColor":"#003da5"},
@@ -1074,8 +1099,12 @@
         {"lineName":"龍仁輕軌","id":"Y124","zh":"前垈·愛寶樂園","en":"Jeondae·Everland","ko":"전대·에버랜드","transfers":"愛寶樂園接駁點","lineColor":"#b7ec59"}
     ];
 
-    // 2. 釜山完整原始數據庫
+    // ==========================================
+    // ➋ 📥 釜山原始數據庫 (請在下方中括號內貼上您的釜山全數據)
+    // ==========================================
     const rawBusanData = [
+        // 👈 請在此處貼上釜山資料，格式如下：
+        // {"lineName":"1號線","id":"101","zh":"多大浦海水浴場","en":"Dadaepo Beach","ko":"다대포해수욕장","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"095","zh":"多大浦海水浴場","en":"Dadaepo Beach","ko":"다대포해수욕장","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"096","zh":"多大浦港","en":"Dadaepo Harbor","ko":"다대포항","transfers":"無","lineColor":"#FFA500"},
         {"lineName":"1號線","id":"097","zh":"納漑","en":"Natgae","ko":"낫개","transfers":"無","lineColor":"#FFA500"},
@@ -1236,63 +1265,70 @@
         {"lineName":"金海輕軌","id":"21","zh":"加耶大","en":"Gaya Univ.","ko":"가야대","transfers":"無","lineColor":"#800080"}
     ];
 
-  // 🧠 智慧大站合併 + 自動前後站偵測引擎
-function processSubwayData(rawArray) {
-    const mergedMap = new Map();
-    
-    // 💡 先將所有車站依路線名稱分組，方便精準定位前後站
-    const linesGroup = {};
-    rawArray.forEach(item => {
-        if (!linesGroup[item.lineName]) linesGroup[item.lineName] = [];
-        linesGroup[item.lineName].push(item);
-    });
+    // 🧠 智慧數據解碼器：自動算出每個車站在該線路的上下游鄰居與 ID
+    function processSubwayData(rawArray) {
+        const mergedMap = new Map();
+        const linesGroup = {};
+        
+        if (!rawArray || rawArray.length === 0) return [];
+        
+        rawArray.forEach(item => {
+            if (!linesGroup[item.lineName]) linesGroup[item.lineName] = [];
+            linesGroup[item.lineName].push(item);
+        });
 
-    rawArray.forEach(item => {
-        const key = item.zh.trim();
-        if (!mergedMap.has(key)) {
-            mergedMap.set(key, {
-                zh: key,
-                en: item.en,
-                ko: item.ko,
-                lines: [],
-                allTransfers: new Set()
+        rawArray.forEach(item => {
+            const key = item.zh.trim();
+            if (!mergedMap.has(key)) {
+                mergedMap.set(key, {
+                    zh: key,
+                    en: item.en,
+                    ko: item.ko,
+                    lines: [],
+                    allTransfers: new Set()
+                });
+            }
+            
+            const stationGroup = mergedMap.get(key);
+            const currentLineList = linesGroup[item.lineName];
+            const idx = currentLineList.findIndex(s => s.id === item.id);
+            
+            const prevObj = idx > 0 ? currentLineList[idx - 1] : null;
+            const nextObj = idx < currentLineList.length - 1 ? currentLineList[idx + 1] : null;
+
+            stationGroup.lines.push({
+                name: item.lineName,
+                color: item.lineColor || "#475569",
+                id: item.id,
+                prevZh: prevObj ? prevObj.zh : "起點站",
+                prevId: prevObj ? prevObj.id : "",
+                nextZh: nextObj ? nextObj.zh : "終點站",
+                nextId: nextObj ? nextObj.id : ""
             });
-        }
-        
-        const stationGroup = mergedMap.get(key);
-        
-        // 🔍 精確抓取當前車站在該路線中的上下游鄰居
-        const currentLineList = linesGroup[item.lineName];
-        const idx = currentLineList.findIndex(s => s.id === item.id);
-        const prevStation = idx > 0 ? currentLineList[idx - 1].zh : "起點站";
-        const nextStation = idx < currentLineList.length - 1 ? currentLineList[idx + 1].zh : "終點站";
-
-        // 將鄰居資訊一起封裝進線路標籤中
-        stationGroup.lines.push({
-            name: item.lineName,
-            color: item.lineColor,
-            id: item.id,
-            prev: prevStation,
-            next: nextStation
+            
+            if (item.transfers && item.transfers !== "無") {
+                const parts = item.transfers.split(/[、，]/);
+                parts.forEach(p => stationGroup.allTransfers.add(p.trim()));
+            }
         });
         
-        if (item.transfers && item.transfers !== "無") {
-            const parts = item.transfers.split(/[、，]/);
-            parts.forEach(p => stationGroup.allTransfers.add(p.trim()));
-        }
-    });
-    
-    return Array.from(mergedMap.values());
-}
+        return Array.from(mergedMap.values());
+    }
 
-    // 數據預編譯
-    const seoulData = processSubwayData(rawSeoulData);
-    const busanData = processSubwayData(rawBusanData);
+    // 延遲初始化載入機制，確保使用者貼上資料後能防呆正常運作
+    let seoulData = [];
+    let busanData = [];
+    let subwayData = [];
+
+    function initSystem() {
+        seoulData = processSubwayData(rawSeoulData);
+        busanData = processSubwayData(rawBusanData);
+        subwayData = (currentCity === 'seoul') ? [...seoulData] : [...busanData];
+        renderStations(subwayData);
+    }
 
     let currentCity = 'seoul';
-    let subwayData = [...seoulData];
 
-    // 雙城分頁切換
     function switchCity(city) {
         currentCity = city;
         document.getElementById('btn-seoul').classList.remove('active');
@@ -1311,10 +1347,9 @@ function processSubwayData(rawArray) {
 
         renderStations(subwayData);
         renderHistory();
-        updateMapContent(); // 👈 城市切換時，自動重新載入地圖內容
+        updateMapContent();
     }
 
-    // 🗺️ 地鐵路網圖動態顯示/摺疊控制
     function toggleMap() {
         const viewport = document.getElementById('mapViewport');
         const btn = document.getElementById('mapToggleBtn');
@@ -1329,22 +1364,15 @@ function processSubwayData(rawArray) {
         }
     }
 
-    // 🗺️ 跨 PDF / 圖片雙引擎地圖動態渲染器
     function updateMapContent() {
         const mapData = cityMaps[currentCity];
         document.getElementById('mapTitle').innerText = mapData.title;
         document.getElementById('mapFullLink').href = mapData.url;
-        
         const wrapper = document.getElementById('mapImgWrapper');
         
         if (mapData.type === "pdf") {
-            // 首爾：使用網頁內嵌 iframe 無縫解析 PDF 檔
-            wrapper.innerHTML = `
-                <iframe src="${mapData.url}" width="100%" height="480px" style="border:none; display:block;">
-                    您的瀏覽器不支援直接預覽 PDF，請點選右上角連結查看。
-                </iframe>`;
+            wrapper.innerHTML = `<iframe src="${mapData.url}" width="100%" height="480px" style="border:none; display:block;"></iframe>`;
         } else {
-            // 釜山：使用支援手機滑動的 RWD 圖片視窗
             wrapper.innerHTML = `
                 <div style="padding:10px; max-height:380px; overflow:auto; background:#ffffff;">
                     <img src="${mapData.url}" alt="地鐵圖" style="width:100%; height:auto; display:block; margin:0 auto;">
@@ -1352,27 +1380,8 @@ function processSubwayData(rawArray) {
         }
     }
 
-    // 🔄 換乘動態彩色 Badge 生成器
-    function generateTransferBadges(transferSet) {
-        if (!transferSet || transferSet.size === 0) return "";
-        
-        let html = '<div class="transfer-section"><span class="transfer-title">🔄 轉乘：</span>';
-        transferSet.forEach(line => {
-            let matchedColor = "#475569"; 
-            for (let colorName in colorPalette) {
-                if (line.includes(colorName)) {
-                    matchedColor = colorPalette[colorName];
-                    break;
-                }
-            }
-            html += `<span class="transfer-badge" style="background-color: ${matchedColor};">${line}</span>`;
-        });
-        html += '</div>';
-        return html;
-    }
-
-    // 📋 卡片點擊事件（快選紀錄 + 韓文站名秒複製）
-    function handleCardClick(zhName, koName) {
+    function handleKoreanClick(event, zhName, koName) {
+        event.stopPropagation(); 
         navigator.clipboard.writeText(koName).then(() => {
             const toast = document.getElementById('toast');
             toast.innerText = `📋 已複製「${koName}」，可直接貼進地圖！`;
@@ -1385,24 +1394,18 @@ function processSubwayData(rawArray) {
         history.unshift({ zh: zhName, ko: koName });
         if (history.length > 4) history.pop();
         localStorage.setItem(`history_${currentCity}`, JSON.stringify(history));
-        
         renderHistory();
     }
 
-    // ⏰ 最近查過快速鍵快打區
     function renderHistory() {
         const historySection = document.getElementById('historySection');
         const history = JSON.parse(localStorage.getItem(`history_${currentCity}`)) || [];
-        
         if (history.length === 0) {
             historySection.innerHTML = '<span class="history-title">最近查過：</span><span style="color:var(--text-sub); font-style:italic;">暫無歷史紀錄</span>';
             return;
         }
-
         let html = '<span class="history-title">最近查過：</span>';
-        history.forEach(item => {
-            html += `<span class="history-tag" onclick="quickSearch('${item.zh}')">${item.zh}</span>`;
-        });
+        history.forEach(item => { html += `<span class="history-tag" onclick="quickSearch('${item.zh}')">${item.zh}</span>`; });
         historySection.innerHTML = html;
     }
 
@@ -1411,67 +1414,77 @@ function processSubwayData(rawArray) {
         filterStations();
     }
 
-// 🖥️ 車站列表主卡片渲染機制 (含前後站智慧導航版)
-function renderStations(data) {
-    const listContainer = document.getElementById('stationList');
-    const countContainer = document.getElementById('resultCount');
-    listContainer.innerHTML = '';
-    
-    countContainer.innerText = `共 ${data.length} 個綜合大站`;
+    function renderStations(data) {
+        const listContainer = document.getElementById('stationList');
+        const countContainer = document.getElementById('resultCount');
+        listContainer.innerHTML = '';
+        countContainer.innerText = `共 ${data.length} 個綜合大站`;
 
-    if (data.length === 0) {
-        listContainer.innerHTML = '<div class="no-result">沒有找到符合條件的站點 🔍</div>';
-        return;
-    }
+        if (data.length === 0) {
+            listContainer.innerHTML = '<div class="no-result">沒有找到符合條件的站點 🔍</div>';
+            return;
+        }
 
-    data.forEach(station => {
-        const card = document.createElement('div');
-        card.className = 'station-card';
-        card.onclick = () => handleCardClick(station.zh, station.ko);
-        
-        // 💡 核心改動：動態將前後站輸出至線路標籤右側
-        let linesHtml = "";
-        station.lines.forEach(line => {
-            linesHtml += `
-                <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
-                    <span class="line-pill" style="background-color: ${line.color}; margin: 0;">
-                        <span style="font-size:9px; background:rgba(0,0,0,0.2); padding:1px 4px; border-radius:3px;">${line.id}</span>
+        data.forEach(station => {
+            const card = document.createElement('div');
+            card.className = 'station-card';
+            
+            let linesHtml = "";
+            station.lines.forEach(line => {
+                linesHtml += `
+                    <span class="line-pill" style="background-color: ${line.color}; margin-right: 4px; margin-bottom: 4px;">
+                        <span style="font-size:9px; background:rgba(0,0,0,0.2); padding:1px 4px; border-radius:3px; margin-right:4px;">${line.id}</span>
                         ${line.name}
                     </span>
-                    <span style="font-size: 11px; color: var(--text-sub); display: inline-flex; align-items: center; gap: 2px; opacity: 0.85;">
-                        (${line.prev} ➡️ <b>${station.zh}</b> ➡️ ${line.next})
-                    </span>
+                `;
+            });
+            
+            let adjacentHtml = `<div style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px; width: 100%;">`;
+            station.lines.forEach(line => {
+                let prevLink = line.prevId ? `<span class="adjacent-link" onclick="quickSearch('${line.prevZh}')">[${line.prevId}] ${line.prevZh}</span>` : `<span class="adjacent-disabled">起點站</span>`;
+                let nextLink = line.nextId ? `<span class="adjacent-link" onclick="quickSearch('${line.nextZh}')">[${line.nextId}] ${line.nextZh}</span>` : `<span class="adjacent-disabled">終點站</span>`;
+                
+                adjacentHtml += `
+                    <div class="adjacent-row">
+                        <span class="adjacent-line-tag" style="background-color: ${line.color};">${line.name} [${line.id}]</span>
+                        <span class="adjacent-nav-text">${prevLink} ➔ <b class="curr-highlight">${station.zh}</b> ➔ ${nextLink}</span>
+                    </div>
+                `;
+            });
+            adjacentHtml += '</div>';
+
+            const cleanTransfers = new Set();
+            station.allTransfers.forEach(t => {
+                const isMainLine = station.lines.some(l => t.includes(l.name));
+                if (!isMainLine) cleanTransfers.add(t);
+            });
+            const transferHtml = generateTransferBadges(cleanTransfers);
+
+            card.innerHTML = `
+                <div style="display: flex; flex-direction: column; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px;">
+                        <div style="flex: 1.2; display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                            <span class="zh-name">${station.zh}</span>
+                            <div style="display: flex; flex-wrap: wrap;">${linesHtml}</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; font-style: italic; color: var(--text-sub); font-size: 13.5px; font-weight: 500; padding: 0 10px; word-break: break-word;">
+                            ${station.en}
+                        </div>
+                        <div class="ko-box" style="flex: 1.2; min-width: 0;">
+                            <div class="ko-name" onclick="handleKoreanClick(event, '${station.zh}', '${station.ko}')">${station.ko}</div>
+                            <span class="copy-hint">點擊複製 📋</span>
+                        </div>
+                    </div>
+                    <div style="width: 100%;">
+                        ${adjacentHtml}
+                        ${transferHtml}
+                    </div>
                 </div>
             `;
+            listContainer.appendChild(card);
         });
-        
-        const cleanTransfers = new Set();
-        station.allTransfers.forEach(t => {
-            const isMainLine = station.lines.some(l => t.includes(l.name));
-            if (!isMainLine) cleanTransfers.add(t);
-        });
+    }
 
-        const transferHtml = generateTransferBadges(cleanTransfers);
-
-        card.innerHTML = `
-            <div class="station-info" style="width: 70%;">
-                <div class="meta-info" style="display:block;">
-                    <span class="zh-name" style="display:block; margin-bottom: 2px;">${station.zh}</span>
-                    ${linesHtml}
-                </div>
-                <div class="en-name" style="margin-top: 6px;">${station.en}</div>
-                ${transferHtml}
-            </div>
-            <div class="ko-box" style="width: 30%;">
-                <div class="ko-name">${station.ko}</div>
-                <span class="copy-hint">點擊複製 📋</span>
-            </div>
-        `;
-        listContainer.appendChild(card);
-    });
-}
-
-    // 🔍 四合一智慧快搜
     function filterStations() {
         const query = document.getElementById('searchInput').value.toLowerCase().trim();
         const filtered = subwayData.filter(station => {
@@ -1484,8 +1497,8 @@ function renderStations(data) {
         renderStations(filtered);
     }
 
-    // 🚀 初始化載入
-    renderStations(subwayData);
+    // 啟動載入
+    initSystem();
     renderHistory();
     updateMapContent();
 </script>
